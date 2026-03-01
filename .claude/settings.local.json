@@ -25,7 +25,11 @@
       "Bash(curl:*)",
       "Bash(flutter:*)",
       "Bash(dart analyze:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(ssh-add:*)",
+      "Bash(ssh:*)",
+      "Bash(grep:*)",
+      "Bash(xargs:*)"
     ]
   }
 }
