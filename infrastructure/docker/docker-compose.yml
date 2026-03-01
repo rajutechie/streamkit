@@ -1,0 +1,532 @@
+# RajutechieStreamKit - Full Stack (Dependencies + Microservices)
+# Usage: docker compose up -d
+# Includes all infrastructure deps and backend microservices
+
+include:
+  - docker-compose.deps.yml
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  networks:
+    - rajutechie-streamkit-network
+  env_file:
+    - .env
+
+x-common-env: &common-env
+  NODE_ENV: ${NODE_ENV:-development}
+  LOG_LEVEL: ${LOG_LEVEL:-debug}
+  # PostgreSQL
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: ${POSTGRES_USER:-rajutechie-streamkit}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rajutechie-streamkit_secret}
+  POSTGRES_DB: ${POSTGRES_DB:-rajutechie-streamkit}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-rajutechie-streamkit}:${POSTGRES_PASSWORD:-rajutechie-streamkit_secret}@postgres:5432/${POSTGRES_DB:-rajutechie-streamkit}
+  # MongoDB
+  MONGODB_HOST: mongodb
+  MONGODB_PORT: 27017
+  MONGO_USER: ${MONGO_USER:-rajutechie-streamkit}
+  MONGO_PASSWORD: ${MONGO_PASSWORD:-rajutechie-streamkit_secret}
+  MONGO_DB: ${MONGO_DB:-rajutechie-streamkit}
+  MONGODB_URI: mongodb://${MONGO_USER:-rajutechie-streamkit}:${MONGO_PASSWORD:-rajutechie-streamkit_secret}@mongodb:27017/${MONGO_DB:-rajutechie-streamkit}?authSource=admin
+  # Redis
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-rajutechie-streamkit_secret}
+  REDIS_URL: redis://:${REDIS_PASSWORD:-rajutechie-streamkit_secret}@redis:6379
+  # Kafka
+  KAFKA_BROKERS: kafka:29092
+  KAFKA_CLIENT_ID: rajutechie-streamkit
+  # MinIO / S3
+  S3_ENDPOINT: http://minio:9000
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-rajutechie-streamkit}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-rajutechie-streamkit_secret}
+  S3_BUCKET_MEDIA: media
+  S3_BUCKET_RECORDINGS: recordings
+  S3_BUCKET_THUMBNAILS: thumbnails
+  S3_FORCE_PATH_STYLE: "true"
+  S3_REGION: us-east-1
+  # Inter-service URLs
+  AUTH_SERVICE_URL: http://auth-service:3001
+  USER_SERVICE_URL: http://user-service:3002
+  CHAT_SERVICE_URL: http://chat-service:3003
+  CALL_SERVICE_URL: http://call-service:3004
+  MEETING_SERVICE_URL: http://meeting-service:3005
+  STREAM_SERVICE_URL: http://stream-service:3006
+  NOTIFICATION_SERVICE_URL: http://notification-service:3007
+  PRESENCE_SERVICE_URL: http://presence-service:3008
+  MEDIA_SERVICE_URL: http://media-service:3009
+  ANALYTICS_SERVICE_URL: http://analytics-service:3010
+  MODERATION_SERVICE_URL: http://moderation-service:3011
+  SIGNALING_SERVER_URL: http://signaling-server:3012
+  # JWT
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please}
+  JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+  JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800}
+
+x-depends-on-infra: &depends-on-infra
+  postgres:
+    condition: service_healthy
+  mongodb:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  kafka:
+    condition: service_healthy
+
+services:
+  # ─────────────────────────────────────────────
+  # API Gateway - Public HTTP entrypoint
+  # Port: 3000
+  # ─────────────────────────────────────────────
+  api-gateway:
+    <<: *service-defaults
+    build:
+      context: ../../services/api-gateway
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-api-gateway
+    ports:
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: api-gateway
+      PORT: 3000
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    depends_on:
+      <<: *depends-on-infra
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # WebSocket Gateway - Real-time connections
+  # Port: 3100
+  # ─────────────────────────────────────────────
+  ws-gateway:
+    <<: *service-defaults
+    build:
+      context: ../../services/ws-gateway
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-ws-gateway
+    ports:
+      - "${WS_GATEWAY_PORT:-3100}:3100"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: ws-gateway
+      PORT: 3100
+      WS_MAX_CONNECTIONS: ${WS_MAX_CONNECTIONS:-10000}
+      WS_HEARTBEAT_INTERVAL: ${WS_HEARTBEAT_INTERVAL:-30000}
+      WS_PATH: /ws
+    depends_on:
+      <<: *depends-on-infra
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Auth Service - Authentication & authorization
+  # Port: 3001
+  # ─────────────────────────────────────────────
+  auth-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/auth-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-auth-service
+    ports:
+      - "${AUTH_SERVICE_PORT:-3001}:3001"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: auth-service
+      PORT: 3001
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID:-}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET:-}
+      OAUTH_GITHUB_CLIENT_ID: ${OAUTH_GITHUB_CLIENT_ID:-}
+      OAUTH_GITHUB_CLIENT_SECRET: ${OAUTH_GITHUB_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # User Service - User profiles & management
+  # Port: 3002
+  # ─────────────────────────────────────────────
+  user-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/user-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-user-service
+    ports:
+      - "${USER_SERVICE_PORT:-3002}:3002"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: user-service
+      PORT: 3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Chat Service - Messaging & channels
+  # Port: 3003
+  # ─────────────────────────────────────────────
+  chat-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/chat-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-chat-service
+    ports:
+      - "${CHAT_SERVICE_PORT:-3003}:3003"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: chat-service
+      PORT: 3003
+      CHAT_MAX_MESSAGE_LENGTH: ${CHAT_MAX_MESSAGE_LENGTH:-4096}
+      CHAT_MAX_ATTACHMENTS: ${CHAT_MAX_ATTACHMENTS:-10}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Call Service - Voice & video calls
+  # Port: 3004
+  # ─────────────────────────────────────────────
+  call-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/call-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-call-service
+    ports:
+      - "${CALL_SERVICE_PORT:-3004}:3004"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: call-service
+      PORT: 3004
+      CALL_MAX_PARTICIPANTS: ${CALL_MAX_PARTICIPANTS:-100}
+      CALL_RECORDING_ENABLED: ${CALL_RECORDING_ENABLED:-true}
+      TURN_SERVER_URL: ${TURN_SERVER_URL:-}
+      TURN_SERVER_USERNAME: ${TURN_SERVER_USERNAME:-}
+      TURN_SERVER_CREDENTIAL: ${TURN_SERVER_CREDENTIAL:-}
+    depends_on:
+      <<: *depends-on-infra
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Meeting Service - Scheduled meetings & rooms
+  # Port: 3005
+  # ─────────────────────────────────────────────
+  meeting-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/meeting-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-meeting-service
+    ports:
+      - "${MEETING_SERVICE_PORT:-3005}:3005"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: meeting-service
+      PORT: 3005
+      MEETING_MAX_DURATION_HOURS: ${MEETING_MAX_DURATION_HOURS:-24}
+      MEETING_MAX_PARTICIPANTS: ${MEETING_MAX_PARTICIPANTS:-500}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Stream Service - Live streaming
+  # Port: 3006
+  # ─────────────────────────────────────────────
+  stream-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/stream-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-stream-service
+    ports:
+      - "${STREAM_SERVICE_PORT:-3006}:3006"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: stream-service
+      PORT: 3006
+      STREAM_MAX_BITRATE: ${STREAM_MAX_BITRATE:-8000}
+      STREAM_RECORDING_ENABLED: ${STREAM_RECORDING_ENABLED:-true}
+    depends_on:
+      <<: *depends-on-infra
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Notification Service - Push, email, in-app notifications
+  # Port: 3007
+  # ─────────────────────────────────────────────
+  notification-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/notification-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-notification-service
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT:-3007}:3007"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: notification-service
+      PORT: 3007
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@rajutechie-streamkit.io}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_PRIVATE_KEY: ${FCM_PRIVATE_KEY:-}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Presence Service - Online/offline/away status
+  # Port: 3008
+  # ─────────────────────────────────────────────
+  presence-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/presence-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-presence-service
+    ports:
+      - "${PRESENCE_SERVICE_PORT:-3008}:3008"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: presence-service
+      PORT: 3008
+      PRESENCE_TTL_SECONDS: ${PRESENCE_TTL_SECONDS:-300}
+      PRESENCE_CLEANUP_INTERVAL_MS: ${PRESENCE_CLEANUP_INTERVAL_MS:-60000}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3008/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Media Service - File uploads, transcoding, storage
+  # Port: 3009
+  # ─────────────────────────────────────────────
+  media-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/media-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-media-service
+    ports:
+      - "${MEDIA_SERVICE_PORT:-3009}:3009"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: media-service
+      PORT: 3009
+      MEDIA_MAX_FILE_SIZE_MB: ${MEDIA_MAX_FILE_SIZE_MB:-100}
+      MEDIA_ALLOWED_TYPES: ${MEDIA_ALLOWED_TYPES:-image/*,video/*,audio/*,application/pdf}
+      MEDIA_THUMBNAIL_WIDTH: ${MEDIA_THUMBNAIL_WIDTH:-320}
+      MEDIA_THUMBNAIL_HEIGHT: ${MEDIA_THUMBNAIL_HEIGHT:-240}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3009/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Analytics Service - Usage metrics & reporting
+  # Port: 3010
+  # ─────────────────────────────────────────────
+  analytics-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/analytics-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-analytics-service
+    ports:
+      - "${ANALYTICS_SERVICE_PORT:-3010}:3010"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: analytics-service
+      PORT: 3010
+      ANALYTICS_FLUSH_INTERVAL_MS: ${ANALYTICS_FLUSH_INTERVAL_MS:-10000}
+      ANALYTICS_BATCH_SIZE: ${ANALYTICS_BATCH_SIZE:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3010/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Moderation Service - Content moderation & reporting
+  # Port: 3011
+  # ─────────────────────────────────────────────
+  moderation-service:
+    <<: *service-defaults
+    build:
+      context: ../../services/moderation-service
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-moderation-service
+    ports:
+      - "${MODERATION_SERVICE_PORT:-3011}:3011"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: moderation-service
+      PORT: 3011
+      MODERATION_AUTO_FLAG_ENABLED: ${MODERATION_AUTO_FLAG_ENABLED:-true}
+      MODERATION_PROFANITY_FILTER: ${MODERATION_PROFANITY_FILTER:-true}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3011/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Signaling Server - WebRTC signaling
+  # Port: 3012
+  # ─────────────────────────────────────────────
+  signaling-server:
+    <<: *service-defaults
+    build:
+      context: ../../services/signaling-server
+      dockerfile: Dockerfile
+    container_name: rajutechie-streamkit-signaling-server
+    ports:
+      - "${SIGNALING_SERVER_PORT:-3012}:3012"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: signaling-server
+      PORT: 3012
+      SIGNALING_MAX_ROOMS: ${SIGNALING_MAX_ROOMS:-10000}
+      SIGNALING_MAX_PEERS_PER_ROOM: ${SIGNALING_MAX_PEERS_PER_ROOM:-100}
+      TURN_SERVER_URL: ${TURN_SERVER_URL:-}
+      TURN_SERVER_USERNAME: ${TURN_SERVER_USERNAME:-}
+      TURN_SERVER_CREDENTIAL: ${TURN_SERVER_CREDENTIAL:-}
+      STUN_SERVER_URL: ${STUN_SERVER_URL:-stun:stun.l.google.com:19302}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3012/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

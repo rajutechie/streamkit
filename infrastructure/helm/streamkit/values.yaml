@@ -1,0 +1,366 @@
+global:
+  namespace: rajutechie-streamkit
+  imageRegistry: rajutechie-streamkit
+  imagePullPolicy: IfNotPresent
+  imageTag: latest
+
+config:
+  NODE_ENV: production
+  LOG_LEVEL: info
+  REDIS_URL: "redis://redis:6379"
+  KAFKA_BROKERS: "kafka:9092"
+  DATABASE_URL: "postgresql://rajutechie-streamkit:rajutechie-streamkit@postgres:5432/rajutechie-streamkit"
+  MONGODB_URI: "mongodb://mongo:27017/rajutechie-streamkit"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  api:
+    host: api.rajutechie-streamkit.io
+    serviceName: api-gateway
+    servicePort: 3000
+    tls:
+      secretName: rajutechie-streamkit-api-tls
+  ws:
+    host: ws.rajutechie-streamkit.io
+    serviceName: ws-gateway
+    servicePort: 3001
+    tls:
+      secretName: rajutechie-streamkit-ws-tls
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+      nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+      nginx.ingress.kubernetes.io/websocket-services: ws-gateway
+
+services:
+  api-gateway:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/api-gateway
+    port: 3000
+    component: gateway
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  ws-gateway:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/ws-gateway
+    port: 3001
+    component: gateway
+    sessionAffinity: ClientIP
+    sessionAffinityTimeout: 10800
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  auth-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/auth-service
+    port: 3010
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  user-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/user-service
+    port: 3011
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  chat-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/chat-service
+    port: 3012
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  call-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/call-service
+    port: 3013
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  meeting-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/meeting-service
+    port: 3014
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  stream-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/stream-service
+    port: 3015
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  notification-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/notification-service
+    port: 3016
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  presence-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/presence-service
+    port: 3017
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  media-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/media-service
+    port: 3018
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  analytics-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/analytics-service
+    port: 3019
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  moderation-service:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/moderation-service
+    port: 3020
+    component: service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+  signaling-server:
+    enabled: true
+    replicas: 2
+    image:
+      repository: rajutechie-streamkit/signaling-server
+    port: 3030
+    component: signaling
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    env: {}
+
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3

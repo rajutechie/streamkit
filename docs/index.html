@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamKit — Real-Time Communication Infrastructure by Rajutechie</title>
+<meta name="description" content="Self-hosted, open-source real-time communication platform. Video calls, live streaming, chat, and presence — built on mediasoup WebRTC. No vendor lock-in.">
+<style>
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --elevated: #21262d;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --accent-green: #3fb950;
+  --accent-purple: #d2a8ff;
+  --accent-orange: #ffa657;
+  --accent-red: #ff7b72;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --nav-h: 60px;
+  --r: 10px;
+  --r-lg: 14px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+.grad-text {
+  background: linear-gradient(135deg, #58a6ff 0%, #d2a8ff 55%, #79c0ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+#navbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  z-index: 1000;
+  transition: background 0.3s, border-color 0.3s;
+  border-bottom: 1px solid transparent;
+}
+#navbar.scrolled {
+  background: rgba(13,17,23,0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: var(--border);
+}
+.nav-inner {
+  max-width: 1160px; margin: 0 auto; padding: 0 24px;
+  height: 100%; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 700; color: var(--text);
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #1f6feb, #8957e5);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 900; color: #fff;
+  flex-shrink: 0;
+}
+.logo-badge {
+  font-size: 10px; font-weight: 500; color: var(--text-muted);
+  background: var(--elevated); border: 1px solid var(--border);
+  border-radius: 20px; padding: 1px 7px;
+  align-self: flex-start; margin-top: 3px;
+}
+.nav-links { display: flex; align-items: center; gap: 2px; list-style: none; }
+.nav-links a {
+  font-size: 14px; color: var(--text-secondary);
+  padding: 6px 12px; border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-links a:hover { color: var(--text); background: var(--elevated); }
+.btn-nav {
+  font-size: 13px; font-weight: 600;
+  background: var(--accent); color: #fff;
+  padding: 7px 18px; border-radius: 20px;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+}
+.btn-nav:hover { opacity: 0.88; transform: translateY(-1px); }
+
+#hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  padding: 7px; border-radius: 6px;
+  background: var(--elevated); border: 1px solid var(--border);
+}
+#hamburger span {
+  display: block; width: 18px; height: 2px;
+  background: var(--text-secondary); border-radius: 1px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+#hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+#hamburger.open span:nth-child(2) { opacity: 0; }
+#hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+#mobile-menu {
+  display: none; position: fixed;
+  top: var(--nav-h); left: 0; right: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 24px 20px; z-index: 999;
+  flex-direction: column; gap: 2px;
+}
+#mobile-menu.open { display: flex; }
+#mobile-menu a {
+  font-size: 14px; color: var(--text-secondary);
+  padding: 10px 12px; border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+#mobile-menu a:hover { color: var(--text); background: var(--elevated); }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: calc(var(--nav-h) + 64px) 0 80px;
+  overflow: hidden;
+}
+.hero-dotgrid {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(48,54,61,0.75) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: radial-gradient(ellipse 75% 80% at 50% 40%, black 20%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 80% at 50% 40%, black 20%, transparent 100%);
+}
+.glow-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(90px); pointer-events: none;
+}
+.glow-1 {
+  width: 640px; height: 420px;
+  background: rgba(31,111,235,0.13);
+  top: 5%; left: -12%;
+  animation: blobFloat1 9s ease-in-out infinite;
+}
+.glow-2 {
+  width: 500px; height: 500px;
+  background: rgba(137,87,229,0.1);
+  top: 15%; right: -8%;
+  animation: blobFloat2 11s ease-in-out infinite;
+}
+@keyframes blobFloat1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(28px,18px)} }
+@keyframes blobFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-18px,26px)} }
+
+.hero-grid {
+  position: relative; z-index: 1;
+  max-width: 1160px; margin: 0 auto; padding: 0 24px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 64px; align-items: center;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  background: rgba(88,166,255,0.1);
+  border: 1px solid rgba(88,166,255,0.3);
+  border-radius: 20px; padding: 4px 14px;
+  margin-bottom: 22px; letter-spacing: 0.03em;
+}
+.eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-green);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.65)} }
+
+.hero-h1 {
+  font-size: clamp(38px, 5.5vw, 62px);
+  font-weight: 800; line-height: 1.08;
+  letter-spacing: -0.03em; margin-bottom: 22px;
+}
+.hero-sub {
+  font-size: 16px; color: var(--text-secondary);
+  line-height: 1.78; margin-bottom: 34px; max-width: 500px;
+}
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 600;
+  background: var(--accent); color: #fff;
+  padding: 10px 22px; border-radius: 8px;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+  opacity: 0.88; transform: translateY(-1px);
+  box-shadow: 0 0 22px rgba(88,166,255,0.38);
+}
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 600; color: var(--text-secondary);
+  border: 1px solid var(--border); padding: 10px 22px; border-radius: 8px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.btn-ghost:hover { color: var(--text); border-color: #484f58; background: var(--elevated); }
+
+.hero-trust {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-muted);
+}
+.trust-stars { color: #ffa657; letter-spacing: -1px; font-size: 13px; }
+
+/* Terminal */
+.hero-right { position: relative; }
+
+.terminal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03);
+}
+.t-bar {
+  background: var(--elevated); padding: 12px 16px;
+  display: flex; align-items: center; gap: 7px;
+  border-bottom: 1px solid var(--border);
+}
+.t-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.t-dot.r { background: #ff5f57; }
+.t-dot.y { background: #febc2e; }
+.t-dot.g { background: #28c840; }
+.t-title { flex: 1; text-align: center; font-size: 11.5px; color: var(--text-muted); font-family: var(--mono); }
+.t-body {
+  padding: 20px 22px; font-family: var(--mono);
+  font-size: 12.5px; line-height: 1.9; overflow-x: auto;
+}
+
+/* syntax */
+.cm  { color: #8b949e; font-style: italic; }
+.kw  { color: #ff7b72; }
+.str { color: #a5d6ff; }
+.fn  { color: #d2a8ff; }
+.key { color: #ffa657; }
+.num { color: #79c0ff; }
+.op  { color: #8b949e; }
+.tp  { color: #79c0ff; }
+
+.chips-wrap { position: absolute; inset: 0; pointer-events: none; }
+.chip {
+  position: absolute; font-size: 11px; font-weight: 600;
+  padding: 5px 11px; border-radius: 20px;
+  background: rgba(22,27,34,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border); color: var(--text-secondary);
+  white-space: nowrap; animation: chipFloat 4s ease-in-out infinite;
+}
+.chip-1 { top: -16px; left: 18%; border-color: rgba(88,166,255,0.5); color: var(--accent); animation-delay: 0s; }
+.chip-2 { top: 28%; right: -22px; border-color: rgba(63,185,80,0.5); color: var(--accent-green); animation-delay: 1.2s; }
+.chip-3 { bottom: 22%; right: -16px; border-color: rgba(210,168,255,0.5); color: var(--accent-purple); animation-delay: 2.1s; }
+.chip-4 { bottom: -16px; left: 28%; border-color: rgba(255,166,87,0.5); color: var(--accent-orange); animation-delay: 0.7s; }
+@keyframes chipFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+
+/* ============================================================
+   TECH STACK STRIP
+   ============================================================ */
+#techstack {
+  padding: 36px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ts-label {
+  text-align: center; font-size: 11px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 18px;
+}
+.pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.pill {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--elevated); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 15px;
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+.pill:hover { border-color: var(--accent); color: var(--text); }
+.pill-icon { font-size: 15px; }
+
+/* ============================================================
+   SECTION SHARED
+   ============================================================ */
+.section { padding: 96px 0; }
+
+.sec-eyebrow {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px;
+}
+.sec-h {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800; letter-spacing: -0.025em; line-height: 1.15;
+  margin-bottom: 14px;
+}
+.sec-sub {
+  font-size: 15.5px; color: var(--text-secondary);
+  line-height: 1.72; max-width: 560px;
+}
+.sec-hdr { margin-bottom: 52px; }
+.sec-hdr.center { text-align: center; }
+.sec-hdr.center .sec-sub { margin: 0 auto; }
+
+/* ============================================================
+   FEATURES GRID
+   ============================================================ */
+#features { background: var(--bg); }
+.feat-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.feat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 28px;
+  position: relative; overflow: hidden;
+  transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+  cursor: default;
+}
+.feat-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--card-top, linear-gradient(90deg,#58a6ff,#d2a8ff));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.25s ease;
+}
+.feat-card:hover { transform: translateY(-5px); border-color: #484f58; box-shadow: 0 18px 48px rgba(0,0,0,0.35); }
+.feat-card:hover::after { transform: scaleX(1); }
+.feat-card:hover .fc-arr { opacity: 1; transform: translateX(0); }
+.fc-ico {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 16px;
+}
+.fc-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.fc-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+.fc-arr {
+  position: absolute; bottom: 20px; right: 20px;
+  font-size: 15px; color: var(--text-muted);
+  opacity: 0; transform: translateX(-5px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+/* ============================================================
+   SDK SUPPORT SECTION
+   ============================================================ */
+#sdk-support { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.sdk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.sdk-grid-row2 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: calc(75% + 12px);
+}
+.sdk-card {
+  background: var(--elevated); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 24px 22px;
+  position: relative; overflow: hidden;
+  transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+  cursor: default;
+}
+.sdk-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--sdk-top, linear-gradient(90deg,#58a6ff,#d2a8ff));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.25s ease;
+}
+.sdk-card:hover { transform: translateY(-4px); border-color: #484f58; box-shadow: 0 16px 40px rgba(0,0,0,0.32); }
+.sdk-card:hover::after { transform: scaleX(1); }
+.sdk-icon { font-size: 26px; margin-bottom: 10px; }
+.sdk-platform { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.sdk-pkg { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 12px; word-break: break-all; }
+.sdk-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.sdk-tag {
+  font-size: 11px; font-weight: 500; color: var(--text-muted);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2px 9px;
+}
+@media (max-width: 1024px) {
+  .sdk-grid { grid-template-columns: repeat(2,1fr); }
+  .sdk-grid-row2 { grid-template-columns: repeat(2,1fr); max-width: 100%; }
+}
+@media (max-width: 600px) {
+  .sdk-grid { grid-template-columns: 1fr; }
+  .sdk-grid-row2 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   HOW IT WORKS
+   ============================================================ */
+#how {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.steps {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0; position: relative;
+}
+.steps::before {
+  content: ''; position: absolute;
+  top: 34px; left: calc(16.67% + 24px); right: calc(16.67% + 24px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+}
+.step { padding: 0 32px; text-align: center; }
+.step:first-child { padding-left: 0; }
+.step:last-child { padding-right: 0; }
+.step-num {
+  font-size: 52px; font-weight: 900; font-family: var(--mono);
+  background: linear-gradient(135deg, #58a6ff, #d2a8ff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1; margin-bottom: 18px; display: block;
+}
+.step-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+.step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 16px; }
+.step-snippet {
+  display: inline-block; background: var(--elevated);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 14px; font-family: var(--mono);
+  font-size: 11.5px; color: var(--accent-green);
+}
+
+/* ============================================================
+   CODE SHOWCASE
+   ============================================================ */
+#showcase { background: var(--bg); }
+.showcase-grid {
+  display: grid; grid-template-columns: 1fr 1.65fr;
+  gap: 48px; align-items: start;
+}
+.tabs { display: flex; flex-direction: column; gap: 4px; }
+.tab {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border-radius: 8px; font-size: 13.5px; font-weight: 500;
+  color: var(--text-secondary); background: none;
+  border: 1px solid transparent; text-align: left;
+  transition: all 0.15s; width: 100%; cursor: pointer;
+}
+.tab:hover { color: var(--text); background: var(--surface); border-color: var(--border); }
+.tab.active { color: var(--text); background: var(--surface); border-color: var(--border); }
+.tab .t-ico { font-size: 18px; flex-shrink: 0; }
+.t-name { font-weight: 600; font-size: 13px; }
+.t-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.t-arr { margin-left: auto; color: var(--accent); font-size: 14px; }
+.tab:not(.active) .t-arr { display: none; }
+
+.cw {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); overflow: hidden;
+  box-shadow: 0 20px 64px rgba(0,0,0,0.4);
+}
+.cw-top {
+  background: var(--elevated); padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.cw-dots { display: flex; gap: 6px; }
+.cw-d { width: 10px; height: 10px; border-radius: 50%; }
+.cw-d.r{background:#ff5f57} .cw-d.y{background:#febc2e} .cw-d.g{background:#28c840}
+.cw-fname { flex: 1; text-align: center; font-size: 11.5px; color: var(--text-muted); font-family: var(--mono); }
+
+.pane {
+  display: none; padding: 20px 24px;
+  font-family: var(--mono); font-size: 12.5px;
+  line-height: 1.88; color: var(--text);
+  overflow-x: auto; min-height: 290px;
+  animation: fadePane 0.22s ease;
+}
+.pane.active { display: block; }
+@keyframes fadePane { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+/* ============================================================
+   USE CASES
+   ============================================================ */
+#usecases {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.uc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.uc-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 32px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.uc-card:hover { border-color: #484f58; transform: translateY(-3px); }
+.uc-icon { font-size: 32px; margin-bottom: 14px; }
+.uc-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.uc-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+
+/* ============================================================
+   METRICS
+   ============================================================ */
+#metrics { background: var(--bg); border-top: 1px solid var(--border); }
+.m-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 52px; }
+.m-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 28px 22px; text-align: center;
+  transition: border-color 0.2s;
+}
+.m-card:hover { border-color: var(--accent); }
+.m-icon { font-size: 24px; margin-bottom: 12px; }
+.m-val {
+  font-size: 38px; font-weight: 900; letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #58a6ff, #d2a8ff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1; margin-bottom: 7px;
+  font-family: var(--mono);
+}
+.m-lbl { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+
+.testimonial {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 36px 42px;
+  display: flex; gap: 24px; align-items: flex-start;
+}
+.q-mark {
+  font-size: 56px; color: var(--accent); line-height: 0.8;
+  flex-shrink: 0; opacity: 0.35; font-family: Georgia, serif; margin-top: 6px;
+}
+.q-text {
+  font-size: 17px; color: var(--text); line-height: 1.75;
+  font-style: italic; margin-bottom: 16px;
+}
+.q-author { font-size: 13px; color: var(--text-muted); }
+.q-author strong { color: var(--text-secondary); }
+
+/* ============================================================
+   SELF-HOSTING
+   ============================================================ */
+#selfhost {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.sh-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 64px; align-items: center; }
+.sh-h {
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 800; letter-spacing: -0.025em; line-height: 1.15;
+  margin-bottom: 14px;
+}
+.sh-sub { font-size: 15px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 28px; }
+.sh-list { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+.sh-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-secondary); }
+.sh-list li .ic { flex-shrink: 0; margin-top: 1px; }
+.sh-list strong { color: var(--text); }
+
+.yaml-win {
+  background: var(--elevated); border: 1px solid var(--border);
+  border-radius: var(--r-lg); overflow: hidden;
+  box-shadow: 0 20px 64px rgba(0,0,0,0.45);
+}
+.yaml-top {
+  background: var(--surface); padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.yaml-top .dd { display:flex;gap:6px }
+.yaml-top .d { width:10px;height:10px;border-radius:50% }
+.yaml-top .d.r{background:#ff5f57} .yaml-top .d.y{background:#febc2e} .yaml-top .d.g{background:#28c840}
+.yaml-nm { flex:1;text-align:center;font-size:11.5px;color:var(--text-muted);font-family:var(--mono) }
+.yaml-body {
+  padding: 18px 22px; font-family: var(--mono);
+  font-size: 12.5px; line-height: 1.9; overflow-x: auto;
+}
+.yk { color: #79c0ff; }
+.yv { color: #a5d6ff; }
+.yc { color: #8b949e; font-style: italic; }
+.yn { color: #3fb950; }
+
+/* ============================================================
+   CTA SECTION
+   ============================================================ */
+#cta {
+  padding: 120px 0; text-align: center;
+  position: relative; overflow: hidden; background: var(--bg);
+}
+.cta-glow {
+  position: absolute; width: 800px; height: 500px;
+  background: radial-gradient(ellipse at center, rgba(31,111,235,0.14) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+#cta h2 {
+  font-size: clamp(32px, 5vw, 54px);
+  font-weight: 800; letter-spacing: -0.03em;
+  margin-bottom: 14px; position: relative;
+}
+#cta .cta-sub {
+  font-size: 16px; color: var(--text-secondary);
+  max-width: 480px; margin: 0 auto 32px;
+  line-height: 1.7; position: relative;
+}
+.cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; position: relative; }
+.cta-gh { font-size: 13px; color: var(--text-muted); position: relative; }
+.cta-gh a { color: var(--accent); }
+.cta-gh a:hover { text-decoration: underline; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 60px 0 0;
+}
+.footer-top {
+  display: grid; grid-template-columns: 1.4fr repeat(4,1fr);
+  gap: 40px; margin-bottom: 48px;
+}
+.fb-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 700; margin-bottom: 10px;
+}
+.fb-logo .lm {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #1f6feb, #8957e5);
+  border-radius: 6px; display: flex; align-items: center;
+  justify-content: center; font-size: 12px; font-weight: 900; color: #fff;
+}
+.fb-tagline { font-size: 13px; color: var(--text-secondary); line-height: 1.6; max-width: 190px; }
+.fc h4 {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+}
+.fc ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.fc a { font-size: 13px; color: var(--text-secondary); transition: color 0.15s; }
+.fc a:hover { color: var(--text); }
+.footer-bar {
+  border-top: 1px solid var(--border); padding: 16px 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-bar p { font-size: 12px; color: var(--text-muted); }
+.footer-bar a { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .feat-grid { grid-template-columns: repeat(2,1fr); }
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero-right { display: none; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 28px; }
+}
+@media (max-width: 768px) {
+  .nav-links, .btn-nav { display: none; }
+  #hamburger { display: flex; }
+  .steps { grid-template-columns: 1fr; }
+  .steps::before { display: none; }
+  .step { padding: 0; margin-bottom: 36px; text-align: left; }
+  .showcase-grid { grid-template-columns: 1fr; }
+  .uc-grid { grid-template-columns: 1fr; }
+  .m-grid { grid-template-columns: repeat(2,1fr); }
+  .sh-grid { grid-template-columns: 1fr; }
+  .yaml-win { display: none; }
+  .testimonial { flex-direction: column; gap: 10px; padding: 24px; }
+  .feat-grid { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .m-grid { grid-template-columns: 1fr 1fr; }
+  .footer-top { grid-template-columns: 1fr; }
+  .footer-bar { flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     NAVBAR
+     ═══════════════════════════════════════════════ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="logo-mark">S</div>
+      StreamKit
+      <span class="logo-badge">by Rajutechie</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#usecases">Use Cases</a></li>
+      <li><a href="integration-wiki.html">Docs</a></li>
+      <li><a href="#">GitHub</a></li>
+    </ul>
+    <a href="#cta" class="btn-nav">Get Started →</a>
+    <button id="hamburger" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div id="mobile-menu">
+  <a href="#features">Features</a>
+  <a href="#how">How It Works</a>
+  <a href="#usecases">Use Cases</a>
+  <a href="integration-wiki.html">Docs</a>
+  <a href="#">GitHub</a>
+  <a href="#cta" style="color:var(--accent);font-weight:600;margin-top:8px">Get Started →</a>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-dotgrid"></div>
+  <div class="glow-blob glow-1"></div>
+  <div class="glow-blob glow-2"></div>
+
+  <div class="hero-grid">
+    <!-- Left copy -->
+    <div class="hero-left">
+      <div class="eyebrow">
+        <div class="eyebrow-dot"></div>
+        Open Source &nbsp;·&nbsp; Self-Hosted &nbsp;·&nbsp; Production Ready
+      </div>
+      <h1 class="hero-h1">
+        Real&#8209;Time<br>Communication<br>
+        <span class="grad-text">Infrastructure You Own</span>
+      </h1>
+      <p class="hero-sub">StreamKit gives your app video calls, live streaming, chat, and presence — built on mediasoup WebRTC, running on your infrastructure. No vendor lock-in. No per-minute pricing.</p>
+      <div class="hero-ctas">
+        <a href="integration-wiki.html" class="btn-primary">Read the Docs →</a>
+        <a href="#" class="btn-ghost">⭐ View on GitHub</a>
+      </div>
+      <div class="hero-trust">
+        <span class="trust-stars">★★★★★</span>
+        Trusted by developers building the next generation of real-time apps
+      </div>
+    </div>
+
+    <!-- Right: terminal -->
+    <div class="hero-right">
+      <div class="chips-wrap">
+        <div class="chip chip-1">⚡ &lt; 50ms latency</div>
+        <div class="chip chip-2">🌐 WebRTC SFU</div>
+        <div class="chip chip-3">📡 HLS Streaming</div>
+        <div class="chip chip-4">📊 E2E Analytics</div>
+      </div>
+      <div class="terminal">
+        <div class="t-bar">
+          <div class="t-dot r"></div>
+          <div class="t-dot y"></div>
+          <div class="t-dot g"></div>
+          <div class="t-title">app.module.ts — StreamKit Angular SDK</div>
+        </div>
+        <div class="t-body">
+<span class="kw">import</span> <span class="op">{ </span><span class="tp">RajutechieStreamKitModule</span><span class="op"> }</span>
+  <span class="kw">from</span> <span class="str">'@rajutechie/streamkit-angular'</span><span class="op">;</span>
+
+<span class="tp">RajutechieStreamKitModule</span><span class="op">.</span><span class="fn">forRoot</span><span class="op">({</span>
+  <span class="key">apiKey</span><span class="op">:</span>   <span class="str">'sk_live_...'</span><span class="op">,</span>
+  <span class="key">baseUrl</span><span class="op">:</span>  <span class="str">'https://your.domain'</span><span class="op">,</span>
+<span class="op">})</span>
+
+<span class="cm">// Video call</span>
+<span class="key">callService</span><span class="op">.</span><span class="fn">startCall</span><span class="op">({</span> <span class="key">targetUserId</span><span class="op">:</span> <span class="str">'user_123'</span><span class="op">,</span>
+  <span class="key">type</span><span class="op">:</span> <span class="str">'video'</span> <span class="op">}).</span><span class="fn">subscribe</span><span class="op">(...)</span>
+
+<span class="cm">// Chat</span>
+<span class="key">chatService</span><span class="op">.</span><span class="fn">messageStream</span><span class="op">(</span><span class="str">'channel_id'</span><span class="op">)</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">(</span>msg <span class="op">=></span> console<span class="op">.</span><span class="fn">log</span><span class="op">(</span>msg<span class="op">))</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     TECH STACK STRIP
+     ═══════════════════════════════════════════════ -->
+<section id="techstack">
+  <div class="container">
+    <p class="ts-label">Powered by battle-tested open-source technology</p>
+    <div class="pills">
+      <div class="pill"><span class="pill-icon">🟢</span> Node.js</div>
+      <div class="pill"><span class="pill-icon">🎬</span> mediasoup</div>
+      <div class="pill"><span class="pill-icon">📨</span> Apache Kafka</div>
+      <div class="pill"><span class="pill-icon">⚡</span> Redis</div>
+      <div class="pill"><span class="pill-icon">🐘</span> PostgreSQL</div>
+      <div class="pill"><span class="pill-icon">🅰</span> Angular</div>
+      <div class="pill"><span class="pill-icon">🔥</span> Firebase FCM</div>
+      <div class="pill"><span class="pill-icon">🐳</span> Docker</div>
+      <div class="pill"><span class="pill-icon">⚛</span> React</div>
+      <div class="pill"><span class="pill-icon">📱</span> React Native</div>
+      <div class="pill"><span class="pill-icon">🦋</span> Flutter</div>
+      <div class="pill"><span class="pill-icon">🍎</span> Swift</div>
+      <div class="pill"><span class="pill-icon">🤖</span> Kotlin</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     FEATURES
+     ═══════════════════════════════════════════════ -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="sec-hdr center fade-up">
+      <p class="sec-eyebrow">Core Capabilities</p>
+      <h2 class="sec-h">Everything your app needs,<br>nothing you don't</h2>
+      <p class="sec-sub">Six core capabilities, built to work together from day one.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="fade-up feat-card" style="--card-top:linear-gradient(90deg,#58a6ff,#388bfd)">
+        <div class="fc-ico" style="background:rgba(88,166,255,.12)">💬</div>
+        <div class="fc-title">Chat &amp; Channels</div>
+        <p class="fc-desc">Real-time messaging with channels, threads, reactions, read receipts, and file sharing. Backed by Kafka event streaming for zero message loss.</p>
+        <span class="fc-arr">→</span>
+      </div>
+      <div class="fade-up feat-card" style="--card-top:linear-gradient(90deg,#3fb950,#2ea043);transition-delay:.07s">
+        <div class="fc-ico" style="background:rgba(63,185,80,.12)">📹</div>
+        <div class="fc-title">HD Video Calls</div>
+        <p class="fc-desc">1-on-1 and group calls powered by mediasoup WebRTC SFU. Adaptive bitrate, screen sharing, and recording — all WebRTC-native, not peer-to-peer.</p>
+        <span class="fc-arr">→</span>
+      </div>
+      <div class="fade-up feat-card" style="--card-top:linear-gradient(90deg,#d2a8ff,#8957e5);transition-delay:.14s">
+        <div class="fc-ico" style="background:rgba(210,168,255,.12)">🎙</div>
+        <div class="fc-title">Group Meetings</div>
+        <p class="fc-desc">Schedule, join, and host meetings with participant management, raise-hand controls, mute-all, and full session analytics out of the box.</p>
+        <span class="fc-arr">→</span>
+      </div>
+      <div class="fade-up feat-card" style="--card-top:linear-gradient(90deg,#ffa657,#d29922);transition-delay:.21s">
+        <div class="fc-ico" style="background:rgba(255,166,87,.12)">📡</div>
+        <div class="fc-title">Live Streaming</div>
+        <p class="fc-desc">HLS + RTMP ingest, OBS-compatible. DVR support, adaptive bitrate, chat overlay, viewer analytics, and stream key management built in.</p>
+        <span class="fc-arr">→</span>
+      </div>
+      <div class="fade-up feat-card" style="--card-top:linear-gradient(90deg,#79c0ff,#58a6ff);transition-delay:.28s">
+        <div class="fc-ico" style="background:rgba(121,192,255,.12)">🔔</div>
+        <div class="fc-title">Push Notifications</div>
+        <p class="fc-desc">FCM for Android, APNS for iOS, and SMTP email. Per-user preference management, quiet hours, and notification history built in.</p>
+        <span class="fc-arr">→</span>
+      </div>
+      <div class="fade-up feat-card" style="--card-top:linear-gradient(90deg,#ff7b72,#f85149);transition-delay:.35s">
+        <div class="fc-ico" style="background:rgba(248,81,73,.12)">🛡</div>
+        <div class="fc-title">Content Moderation</div>
+        <p class="fc-desc">Auto-moderation rules (word/regex), bans with expiry, reports, and a full admin audit trail. Works across chat, streams, and calls.</p>
+        <span class="fc-arr">→</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SDK SUPPORT
+     ═══════════════════════════════════════════════ -->
+<section id="sdk-support" class="section">
+  <div class="container">
+    <div class="sec-hdr center fade-up">
+      <p class="sec-eyebrow">Multi-Platform SDK Support</p>
+      <h2 class="sec-h">One backend, every platform</h2>
+      <p class="sec-sub">Official SDKs for every major platform and framework</p>
+    </div>
+
+    <!-- Row 1: 4 cards -->
+    <div class="sdk-grid">
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#dd0031,#c3002f)">
+        <div class="sdk-icon">🔵</div>
+        <div class="sdk-platform">Angular</div>
+        <div class="sdk-pkg">@rajutechie-streamkit/angular-sdk</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Services</span>
+          <span class="sdk-tag">Observables</span>
+          <span class="sdk-tag">RxJS</span>
+        </div>
+      </div>
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#61dafb,#21a1c4);transition-delay:.07s">
+        <div class="sdk-icon">⚛</div>
+        <div class="sdk-platform">React</div>
+        <div class="sdk-pkg">@rajutechie-streamkit/react-sdk</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Hooks</span>
+          <span class="sdk-tag">Provider</span>
+          <span class="sdk-tag">Real-time state</span>
+        </div>
+      </div>
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#61dafb,#a8d8ff);transition-delay:.14s">
+        <div class="sdk-icon">📱</div>
+        <div class="sdk-platform">React Native</div>
+        <div class="sdk-pkg">@rajutechie-streamkit/react-native-sdk</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Native media</span>
+          <span class="sdk-tag">WebRTC</span>
+          <span class="sdk-tag">FCM/APNS</span>
+        </div>
+      </div>
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#f7df1e,#c9a800);transition-delay:.21s">
+        <div class="sdk-icon">🌐</div>
+        <div class="sdk-platform">JavaScript</div>
+        <div class="sdk-pkg">@rajutechie-streamkit/js-sdk</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Browser wrapper</span>
+          <span class="sdk-tag">WebRTC helpers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: 3 cards -->
+    <div class="sdk-grid-row2">
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#54c5f8,#01579b);transition-delay:.07s">
+        <div class="sdk-icon">🦋</div>
+        <div class="sdk-platform">Flutter</div>
+        <div class="sdk-pkg">streamkit_flutter</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Dart</span>
+          <span class="sdk-tag">Streams/Futures</span>
+          <span class="sdk-tag">Cross-platform</span>
+        </div>
+      </div>
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#3ddc84,#00a651);transition-delay:.14s">
+        <div class="sdk-icon">🤖</div>
+        <div class="sdk-platform">Android</div>
+        <div class="sdk-pkg">streamkit-android</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Kotlin</span>
+          <span class="sdk-tag">Coroutines</span>
+          <span class="sdk-tag">Flow</span>
+        </div>
+      </div>
+      <div class="sdk-card fade-up" style="--sdk-top:linear-gradient(90deg,#a2aaad,#555);transition-delay:.21s">
+        <div class="sdk-icon">🍎</div>
+        <div class="sdk-platform">iOS</div>
+        <div class="sdk-pkg">StreamKitSwift</div>
+        <div class="sdk-tags">
+          <span class="sdk-tag">Swift</span>
+          <span class="sdk-tag">async/await</span>
+          <span class="sdk-tag">AsyncStream</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     HOW IT WORKS
+     ═══════════════════════════════════════════════ -->
+<section id="how" class="section">
+  <div class="container">
+    <div class="sec-hdr center fade-up">
+      <p class="sec-eyebrow">Setup</p>
+      <h2 class="sec-h">Up and running in minutes</h2>
+      <p class="sec-sub">Three steps from zero to a fully operational real-time communication stack.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade-up">
+        <span class="step-num">01</span>
+        <div class="step-title">Deploy</div>
+        <p class="step-desc">Spin up all microservices, Kafka, Redis, and PostgreSQL with a single command. No complex configuration required to get started.</p>
+        <div class="step-snippet">$ docker compose up -d</div>
+      </div>
+      <div class="step fade-up" style="transition-delay:.1s">
+        <span class="step-num">02</span>
+        <div class="step-title">Integrate</div>
+        <p class="step-desc">Install any of our 7 official SDKs — Angular, React, React Native, Flutter, Android, iOS, or vanilla JS — and start using chat, calls, and streaming immediately.</p>
+        <div class="step-snippet">npm i @rajutechie-streamkit/react-sdk</div>
+      </div>
+      <div class="step fade-up" style="transition-delay:.2s">
+        <span class="step-num">03</span>
+        <div class="step-title">Scale</div>
+        <p class="step-desc">mediasoup workers scale horizontally, Kafka handles millions of events per minute, Redis manages presence for thousands of concurrent users.</p>
+        <div class="step-snippet">kubectl scale deployment/signaling --replicas=8</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     CODE SHOWCASE
+     ═══════════════════════════════════════════════ -->
+<section id="showcase" class="section">
+  <div class="container">
+    <div class="sec-hdr fade-up">
+      <p class="sec-eyebrow">SDK Code Showcase</p>
+      <h2 class="sec-h">Simple API. Powerful results.</h2>
+      <p class="sec-sub">Every feature is one service or hook away. Full TypeScript support across Angular, React, React Native, and more.</p>
+    </div>
+    <div class="showcase-grid">
+      <!-- Tabs -->
+      <div class="tabs fade-up">
+        <button class="tab active" onclick="switchTab('chat',this)">
+          <span class="t-ico">💬</span>
+          <div>
+            <div class="t-name">Chat</div>
+            <div class="t-desc">Channels &amp; real-time messages</div>
+          </div>
+          <span class="t-arr">›</span>
+        </button>
+        <button class="tab" onclick="switchTab('call',this)">
+          <span class="t-ico">📹</span>
+          <div>
+            <div class="t-name">Video Call</div>
+            <div class="t-desc">Start &amp; receive calls</div>
+          </div>
+          <span class="t-arr">›</span>
+        </button>
+        <button class="tab" onclick="switchTab('stream',this)">
+          <span class="t-ico">📡</span>
+          <div>
+            <div class="t-name">Live Stream</div>
+            <div class="t-desc">Create &amp; go live</div>
+          </div>
+          <span class="t-arr">›</span>
+        </button>
+        <button class="tab" onclick="switchTab('presence',this)">
+          <span class="t-ico">🟢</span>
+          <div>
+            <div class="t-name">Presence</div>
+            <div class="t-desc">Online status &amp; bulk lookup</div>
+          </div>
+          <span class="t-arr">›</span>
+        </button>
+        <button class="tab" onclick="switchTab('angular',this)">
+          <span class="t-ico">🔵</span>
+          <div>
+            <div class="t-name">Angular</div>
+            <div class="t-desc">Chat stream &amp; incoming calls</div>
+          </div>
+          <span class="t-arr">›</span>
+        </button>
+        <button class="tab" onclick="switchTab('rn',this)">
+          <span class="t-ico">📱</span>
+          <div>
+            <div class="t-name">React Native</div>
+            <div class="t-desc">Native call &amp; chat hooks</div>
+          </div>
+          <span class="t-arr">›</span>
+        </button>
+      </div>
+
+      <!-- Code window -->
+      <div class="cw fade-up" style="transition-delay:.1s">
+        <div class="cw-top">
+          <div class="cw-dots">
+            <div class="cw-d r"></div>
+            <div class="cw-d y"></div>
+            <div class="cw-d g"></div>
+          </div>
+          <div class="cw-fname" id="cw-fname">chat.component.ts</div>
+        </div>
+
+        <!-- CHAT -->
+        <div class="pane active" id="pane-chat">
+<span class="cm">// Subscribe to real-time channel messages</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">chatService</span>
+  <span class="op">.</span><span class="fn">getChannelMessages</span><span class="op">(</span><span class="str">'channel_general'</span><span class="op">)</span>
+  <span class="op">.</span><span class="fn">pipe</span><span class="op">(</span><span class="fn">takeUntil</span><span class="op">(</span><span class="kw">this</span><span class="op">.</span>destroy$<span class="op">))</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">(</span>msg <span class="op">=></span> <span class="op">{</span>
+    console<span class="op">.</span><span class="fn">log</span><span class="op">(</span>msg<span class="op">.</span>text<span class="op">,</span> <span class="str">'from'</span><span class="op">,</span> msg<span class="op">.</span>senderId<span class="op">);</span>
+  <span class="op">});</span>
+
+<span class="cm">// Send a message with an attachment</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">chatService</span>
+  <span class="op">.</span><span class="fn">sendMessage</span><span class="op">(</span><span class="str">'channel_general'</span><span class="op">, {</span>
+    <span class="key">text</span><span class="op">:</span>        <span class="str">'Hello, team! 👋'</span><span class="op">,</span>
+    <span class="key">attachments</span><span class="op">:</span> <span class="op">[{</span> <span class="key">mediaId</span><span class="op">:</span> <span class="str">'media_abc'</span> <span class="op">}],</span>
+  <span class="op">})</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">();</span>
+
+<span class="cm">// React to a message</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">chatService</span>
+  <span class="op">.</span><span class="fn">addReaction</span><span class="op">(</span><span class="str">'msg_xyz'</span><span class="op">,</span> <span class="str">'👍'</span><span class="op">)</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">();</span>
+        </div>
+
+        <!-- CALL -->
+        <div class="pane" id="pane-call">
+<span class="cm">// Start an outgoing video call</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">callService</span>
+  <span class="op">.</span><span class="fn">startCall</span><span class="op">({</span>
+    <span class="key">targetUserId</span><span class="op">:</span> <span class="str">'user_alice'</span><span class="op">,</span>
+    <span class="key">type</span><span class="op">:</span>         <span class="str">'video'</span><span class="op">,</span>
+  <span class="op">})</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">(</span>call <span class="op">=></span>
+    console<span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">'Call ID:'</span><span class="op">,</span> call<span class="op">.</span>id<span class="op">)</span>
+  <span class="op">);</span>
+
+<span class="cm">// Handle incoming calls (real-time Observable)</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">callService</span><span class="op">.</span>incomingCalls$
+  <span class="op">.</span><span class="fn">pipe</span><span class="op">(</span><span class="fn">takeUntil</span><span class="op">(</span><span class="kw">this</span><span class="op">.</span>destroy$<span class="op">))</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">(</span>call <span class="op">=></span>
+    <span class="kw">this</span><span class="op">.</span><span class="fn">showIncomingCallUI</span><span class="op">(</span>call<span class="op">)</span>
+  <span class="op">);</span>
+
+<span class="cm">// Toggle audio/video mid-call</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">callService</span><span class="op">.</span><span class="fn">toggleAudio</span><span class="op">(</span>callId<span class="op">).</span><span class="fn">subscribe</span><span class="op">();</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">callService</span><span class="op">.</span><span class="fn">toggleVideo</span><span class="op">(</span>callId<span class="op">).</span><span class="fn">subscribe</span><span class="op">();</span>
+        </div>
+
+        <!-- STREAM -->
+        <div class="pane" id="pane-stream">
+<span class="cm">// 1. Create a stream</span>
+<span class="kw">const</span> res  <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span><span class="op">(</span><span class="str">'/streams'</span><span class="op">, {</span>
+  <span class="key">method</span><span class="op">:</span> <span class="str">'POST'</span><span class="op">,</span>
+  <span class="key">body</span><span class="op">:</span> JSON<span class="op">.</span><span class="fn">stringify</span><span class="op">({</span>
+    <span class="key">title</span><span class="op">:</span>      <span class="str">'My Live Stream'</span><span class="op">,</span>
+    <span class="key">hostUserId</span><span class="op">:</span> <span class="str">'user_123'</span><span class="op">,</span>
+    <span class="key">visibility</span><span class="op">:</span> <span class="str">'public'</span><span class="op">,</span>
+    <span class="key">settings</span><span class="op">:</span>  <span class="op">{</span> <span class="key">chatEnabled</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="key">maxBitrate</span><span class="op">:</span> <span class="num">6000</span> <span class="op">},</span>
+  <span class="op">}),</span>
+<span class="op">}).</span><span class="fn">then</span><span class="op">(</span>r <span class="op">=></span> r<span class="op">.</span><span class="fn">json</span><span class="op">());</span>
+
+<span class="cm">// 2. Go live — returns HLS + RTMP URLs</span>
+<span class="kw">await</span> <span class="fn">fetch</span><span class="op">(`/streams/${</span>res<span class="op">.</span>data<span class="op">.</span>id<span class="op">}/start`</span><span class="op">, {</span>
+  <span class="key">method</span><span class="op">:</span> <span class="str">'POST'</span> <span class="op">});</span>
+
+<span class="cm">// → rtmpUrl: rtmp://ingest.domain/live/&lt;key&gt;</span>
+<span class="cm">// → hlsUrl:  https://cdn.domain/live/&lt;id&gt;/index.m3u8</span>
+        </div>
+
+        <!-- PRESENCE -->
+        <div class="pane" id="pane-presence">
+<span class="cm">// Update your presence status</span>
+<span class="kw">await</span> <span class="fn">fetch</span><span class="op">(</span><span class="str">'/presence/user_123'</span><span class="op">, {</span>
+  <span class="key">method</span><span class="op">:</span> <span class="str">'PUT'</span><span class="op">,</span>
+  <span class="key">body</span><span class="op">:</span> JSON<span class="op">.</span><span class="fn">stringify</span><span class="op">({</span>
+    <span class="key">status</span><span class="op">:</span>   <span class="str">'online'</span><span class="op">,</span>  <span class="cm">// online|away|dnd|offline</span>
+    <span class="key">metadata</span><span class="op">:</span> <span class="op">{</span> <span class="key">device</span><span class="op">:</span> <span class="str">'desktop'</span> <span class="op">},</span>
+  <span class="op">}),</span>
+<span class="op">});</span>
+
+<span class="cm">// Bulk-lookup presence for a list of users</span>
+<span class="kw">const</span> presence <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span><span class="op">(</span><span class="str">'/presence/bulk'</span><span class="op">, {</span>
+  <span class="key">method</span><span class="op">:</span> <span class="str">'POST'</span><span class="op">,</span>
+  <span class="key">body</span><span class="op">:</span> JSON<span class="op">.</span><span class="fn">stringify</span><span class="op">({</span>
+    <span class="key">userIds</span><span class="op">: [</span><span class="str">'user_1'</span><span class="op">,</span> <span class="str">'user_2'</span><span class="op">,</span> <span class="str">'user_3'</span><span class="op">],</span>
+  <span class="op">}),</span>
+<span class="op">}).</span><span class="fn">then</span><span class="op">(</span>r <span class="op">=></span> r<span class="op">.</span><span class="fn">json</span><span class="op">());</span>
+<span class="cm">// → [{ userId, status, lastSeen }, ...]</span>
+        </div>
+
+        <!-- ANGULAR -->
+        <div class="pane" id="pane-angular">
+<span class="cm">// Angular SDK — subscribe to chat message stream</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">chatService</span>
+  <span class="op">.</span><span class="fn">messageStream</span><span class="op">(</span><span class="str">'ch_id'</span><span class="op">)</span>
+  <span class="op">.</span><span class="fn">pipe</span><span class="op">(</span><span class="fn">takeUntil</span><span class="op">(</span><span class="kw">this</span><span class="op">.</span>destroy$<span class="op">))</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">(</span>msg <span class="op">=></span> <span class="op">{</span>
+    console<span class="op">.</span><span class="fn">log</span><span class="op">(</span>msg<span class="op">.</span>text<span class="op">,</span> <span class="str">'from'</span><span class="op">,</span> msg<span class="op">.</span>senderId<span class="op">);</span>
+  <span class="op">});</span>
+
+<span class="cm">// Listen for incoming calls (real-time Observable)</span>
+<span class="kw">this</span><span class="op">.</span><span class="key">callService</span><span class="op">.</span>incomingCalls$
+  <span class="op">.</span><span class="fn">pipe</span><span class="op">(</span><span class="fn">takeUntil</span><span class="op">(</span><span class="kw">this</span><span class="op">.</span>destroy$<span class="op">))</span>
+  <span class="op">.</span><span class="fn">subscribe</span><span class="op">(</span>call <span class="op">=></span> <span class="op">{</span>
+    <span class="kw">this</span><span class="op">.</span><span class="fn">showIncomingCallUI</span><span class="op">(</span>call<span class="op">);</span>
+  <span class="op">});</span>
+        </div>
+
+        <!-- REACT NATIVE -->
+        <div class="pane" id="pane-rn">
+<span class="kw">import</span> <span class="op">{</span> <span class="fn">useNativeCall</span><span class="op">,</span> <span class="fn">useNativeChat</span> <span class="op">}</span>
+  <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/react-native-sdk'</span><span class="op">;</span>
+
+<span class="cm">// Native call hook — handles media + push</span>
+<span class="kw">function</span> <span class="fn">CallScreen</span><span class="op">()</span> <span class="op">{</span>
+  <span class="kw">const</span> <span class="op">{</span> startCall<span class="op">,</span> endCall<span class="op">,</span> localStream<span class="op">,</span> remoteStream <span class="op">}</span>
+    <span class="op">=</span> <span class="fn">useNativeCall</span><span class="op">();</span>
+
+  <span class="cm">// Native chat hook — real-time messages</span>
+  <span class="kw">const</span> <span class="op">{</span> messages<span class="op">,</span> sendMessage <span class="op">}</span>
+    <span class="op">=</span> <span class="fn">useNativeChat</span><span class="op">(</span><span class="str">'channel_id'</span><span class="op">);</span>
+
+  <span class="kw">return</span> <span class="op">(</span>
+    <span class="op">&lt;</span>VideoView stream<span class="op">={</span>localStream<span class="op">} /&gt;</span>
+  <span class="op">);</span>
+<span class="op">}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     USE CASES
+     ═══════════════════════════════════════════════ -->
+<section id="usecases" class="section">
+  <div class="container">
+    <div class="sec-hdr fade-up">
+      <p class="sec-eyebrow">Use Cases</p>
+      <h2 class="sec-h">Built for teams building<br>real-time products</h2>
+    </div>
+    <div class="uc-grid">
+      <div class="uc-card fade-up">
+        <div class="uc-icon">🏢</div>
+        <div class="uc-title">SaaS Platforms</div>
+        <p class="uc-desc">Embed video calls, live chat, and presence into your product without building from scratch. White-label the entire stack with your branding and domain.</p>
+      </div>
+      <div class="uc-card fade-up" style="transition-delay:.08s">
+        <div class="uc-icon">🎓</div>
+        <div class="uc-title">EdTech</div>
+        <p class="uc-desc">Host live classes, breakout rooms, screen sharing, and recorded sessions. Full moderation suite for classroom management — all built in.</p>
+      </div>
+      <div class="uc-card fade-up" style="transition-delay:.16s">
+        <div class="uc-icon">📺</div>
+        <div class="uc-title">Creator Economy</div>
+        <p class="uc-desc">RTMP live streaming compatible with OBS, viewer analytics, chat overlay with moderation, and push notifications to subscribers. Your platform, your rules.</p>
+      </div>
+      <div class="uc-card fade-up" style="transition-delay:.24s">
+        <div class="uc-icon">🏥</div>
+        <div class="uc-title">Healthcare &amp; Enterprise</div>
+        <p class="uc-desc">Self-hosted means full infrastructure control. Your data never leaves your servers — critical for HIPAA, SOC 2, and enterprise compliance requirements.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     METRICS
+     ═══════════════════════════════════════════════ -->
+<section id="metrics" class="section">
+  <div class="container">
+    <div class="sec-hdr center fade-up">
+      <p class="sec-eyebrow">Performance</p>
+      <h2 class="sec-h">Built for production scale</h2>
+    </div>
+    <div class="m-grid">
+      <div class="m-card fade-up">
+        <div class="m-icon">🚀</div>
+        <div class="m-val" data-raw="&lt; 50ms">&lt; 50ms</div>
+        <div class="m-lbl">Average WebRTC latency<br>via mediasoup SFU</div>
+      </div>
+      <div class="m-card fade-up" style="transition-delay:.08s">
+        <div class="m-icon">📊</div>
+        <div class="m-val" data-raw="1M+">1M+</div>
+        <div class="m-lbl">Kafka events<br>per minute</div>
+      </div>
+      <div class="m-card fade-up" style="transition-delay:.16s">
+        <div class="m-icon">🔌</div>
+        <div class="m-val" data-count="8" data-suffix="">8</div>
+        <div class="m-lbl">Core microservices,<br>one unified SDK</div>
+      </div>
+      <div class="m-card fade-up" style="transition-delay:.24s">
+        <div class="m-icon">🌍</div>
+        <div class="m-val" data-count="100" data-suffix="%">100%</div>
+        <div class="m-lbl">Data ownership —<br>self-hosted, no vendor</div>
+      </div>
+    </div>
+
+    <div class="testimonial fade-up">
+      <div class="q-mark">&ldquo;</div>
+      <div>
+        <p class="q-text">StreamKit gave us everything we needed to launch our video feature in a week, not a quarter. The mediasoup integration just works — and knowing the data stays on our infrastructure was a dealbreaker for our enterprise clients.</p>
+        <p class="q-author"><strong>Engineering Lead</strong> — B2B SaaS Platform</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SELF-HOSTING
+     ═══════════════════════════════════════════════ -->
+<section id="selfhost" class="section">
+  <div class="container">
+    <div class="sh-grid">
+      <div class="fade-up">
+        <p class="sec-eyebrow">Self-Hosted</p>
+        <h2 class="sh-h">Your infrastructure.<br>Your rules.</h2>
+        <p class="sh-sub">Run StreamKit on any cloud, bare metal, or Kubernetes cluster. Full source access means you can audit, fork, and extend everything.</p>
+        <ul class="sh-list">
+          <li><span class="ic">✅</span><span><strong>Full data ownership</strong> — no third-party data sharing, ever</span></li>
+          <li><span class="ic">✅</span><span><strong>Predictable costs</strong> — no per-minute or per-seat pricing</span></li>
+          <li><span class="ic">✅</span><span><strong>Custom domains &amp; white-labeling</strong> — fully brandable</span></li>
+          <li><span class="ic">✅</span><span><strong>Deploy anywhere</strong> — bare metal, AWS, GCP, Azure, Kubernetes</span></li>
+          <li><span class="ic">✅</span><span><strong>Open source (MIT)</strong> — audit, fork, and extend the codebase</span></li>
+        </ul>
+      </div>
+      <div class="fade-up" style="transition-delay:.12s">
+        <div class="yaml-win">
+          <div class="yaml-top">
+            <div class="dd"><div class="d r"></div><div class="d y"></div><div class="d g"></div></div>
+            <div class="yaml-nm">docker-compose.yml</div>
+          </div>
+          <div class="yaml-body">
+<span class="yk">version</span><span class="yc">:</span> <span class="yv">"3.9"</span>
+<span class="yk">services</span><span class="yc">:</span>
+
+  <span class="yn">api-gateway</span><span class="yc">:</span>
+    <span class="yk">image</span><span class="yc">:</span>    <span class="yv">rajutechie/streamkit-gateway:latest</span>
+    <span class="yk">ports</span><span class="yc">:</span>    <span class="yv">["3000:3000"]</span>
+    <span class="yk">env_file</span><span class="yc">:</span> <span class="yv">.env</span>
+
+  <span class="yn">signaling-server</span><span class="yc">:</span>
+    <span class="yk">image</span><span class="yc">:</span> <span class="yv">rajutechie/streamkit-signaling:latest</span>
+    <span class="yk">ports</span><span class="yc">:</span> <span class="yv">["3030:3030"]</span>
+    <span class="yk">environment</span><span class="yc">:</span>
+      <span class="yk">ANNOUNCED_IP</span><span class="yc">:</span> <span class="yv">${YOUR_PUBLIC_IP}</span>
+
+  <span class="yn">postgres</span><span class="yc">:</span>
+    <span class="yk">image</span><span class="yc">:</span>   <span class="yv">postgres:15-alpine</span>
+    <span class="yk">volumes</span><span class="yc">:</span> <span class="yv">["pgdata:/var/lib/postgresql/data"]</span>
+
+  <span class="yn">redis</span><span class="yc">:</span>
+    <span class="yk">image</span><span class="yc">:</span> <span class="yv">redis:7-alpine</span>
+
+  <span class="yn">kafka</span><span class="yc">:</span>
+    <span class="yk">image</span><span class="yc">:</span> <span class="yv">confluentinc/cp-kafka:7.4.0</span>
+
+<span class="yk">volumes</span><span class="yc">:</span>
+  <span class="yn">pgdata</span><span class="yc">:</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     CTA
+     ═══════════════════════════════════════════════ -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <h2 class="fade-up"><span class="grad-text">Start building in minutes</span></h2>
+    <p class="cta-sub fade-up" style="transition-delay:.08s">
+      Clone the repo, run
+      <code style="background:var(--elevated);padding:2px 8px;border-radius:5px;font-family:var(--mono);font-size:13px;color:var(--accent-green);border:1px solid var(--border)">docker compose up</code>,
+      and your real-time communication stack is live.
+    </p>
+    <div class="cta-btns fade-up" style="transition-delay:.16s">
+      <a href="integration-wiki.html" class="btn-primary" style="padding:12px 28px;font-size:15px">Read the Docs →</a>
+      <a href="user-manual.html" class="btn-ghost" style="padding:12px 28px;font-size:15px">User Manual</a>
+    </div>
+    <p class="cta-gh fade-up" style="transition-delay:.24s">
+      <a href="#">★ Star us on GitHub</a> &nbsp;— it helps more than you know
+    </p>
+    <p class="fade-up" style="transition-delay:.32s;margin-top:10px;position:relative">
+      <a href="#sdk-support" style="font-size:13px;color:var(--accent);opacity:0.8;transition:opacity 0.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">Explore SDK Reference →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="fb-logo">
+          <div class="lm">S</div>
+          StreamKit
+        </div>
+        <p class="fb-tagline">Real-time communication infrastructure you actually own.</p>
+      </div>
+      <div class="fc">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How It Works</a></li>
+          <li><a href="#usecases">Use Cases</a></li>
+          <li><a href="#">Changelog</a></li>
+        </ul>
+      </div>
+      <div class="fc">
+        <h4>Docs</h4>
+        <ul>
+          <li><a href="integration-wiki.html">Developer Wiki</a></li>
+          <li><a href="user-manual.html">User Manual</a></li>
+          <li><a href="#">API Reference</a></li>
+          <li><a href="#">SDK Guide</a></li>
+          <li><a href="#">Android SDK Guide</a></li>
+          <li><a href="#">iOS SDK Guide</a></li>
+          <li><a href="#">Flutter SDK Guide</a></li>
+          <li><a href="#">Server SDK Guide</a></li>
+        </ul>
+      </div>
+      <div class="fc">
+        <h4>Community</h4>
+        <ul>
+          <li><a href="#">GitHub</a></li>
+          <li><a href="#">Discussions</a></li>
+          <li><a href="#">Issues</a></li>
+          <li><a href="#">Changelog</a></li>
+        </ul>
+      </div>
+      <div class="fc">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">MIT License</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <p>© 2026 Rajutechie. StreamKit is open source software released under the <a href="#">MIT License</a>.</p>
+      <p style="color:var(--text-muted);font-size:12px">Made with ❤️ for the open-source community</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── Navbar scroll ── */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+/* ── Hamburger ── */
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+});
+mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+  hamburger.classList.remove('open');
+  mobileMenu.classList.remove('open');
+}));
+
+/* ── Fade-up on scroll ── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -36px 0px' });
+document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
+
+/* ── Hero stagger ── */
+document.querySelectorAll('#hero .hero-left > *, #hero .hero-right').forEach((el, i) => {
+  el.style.cssText += `opacity:0;transform:translateY(20px);transition:opacity .65s ease ${i*0.09}s,transform .65s ease ${i*0.09}s`;
+  setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 80 + i * 80);
+});
+
+/* ── Tech strip stagger ── */
+document.querySelectorAll('.pill').forEach((p, i) => {
+  p.style.cssText += `opacity:0;transform:translateY(12px);transition:opacity .45s ease ${i*0.06}s,transform .45s ease ${i*0.06}s`;
+  const o2 = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) { p.style.opacity='1'; p.style.transform='translateY(0)'; o2.disconnect(); }
+  }, { threshold: 0.3 });
+  o2.observe(p);
+});
+
+/* ── Code tabs ── */
+const filenames = { chat:'chat.component.ts', call:'call.component.ts', stream:'stream.component.ts', presence:'presence.component.ts', angular:'streamkit-angular.component.ts', rn:'CallScreen.tsx' };
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-' + tab).classList.add('active');
+  document.getElementById('cw-fname').textContent = filenames[tab];
+}
+
+/* ── Stats count-up ── */
+function countUp(el) {
+  const target = parseInt(el.dataset.count, 10);
+  const suffix = el.dataset.suffix || '';
+  if (!target) return;
+  const dur = 1400; const start = performance.now();
+  const frame = now => {
+    const p = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * ease) + suffix;
+    if (p < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+const statsIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && e.target.dataset.count) { countUp(e.target); statsIO.unobserve(e.target); }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.m-val[data-count]').forEach(el => statsIO.observe(el));
+
+/* ── Smooth anchor scroll ── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href');
+    if (id === '#') return;
+    const t = document.querySelector(id);
+    if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+</script>
+</body>
+</html>

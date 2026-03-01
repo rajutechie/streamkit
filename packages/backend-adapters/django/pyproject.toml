@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rajutechie-streamkit-django"
+version = "0.1.0"
+description = "RajutechieStreamKit SDK for Django"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=4.2",
+    "PyJWT>=2.8.0",
+    "httpx>=0.25.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-django"]

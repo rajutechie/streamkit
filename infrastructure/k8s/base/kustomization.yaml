@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rajutechie-streamkit
+
+resources:
+  - namespace.yaml
+  - config-maps.yaml
+  - ingress.yaml
+  - services/api-gateway.yaml
+  - services/ws-gateway.yaml
+  - services/auth-service.yaml
+  - services/user-service.yaml
+  - services/chat-service.yaml
+  - services/call-service.yaml
+  - services/meeting-service.yaml
+  - services/stream-service.yaml
+  - services/notification-service.yaml
+  - services/presence-service.yaml
+  - services/media-service.yaml
+  - services/analytics-service.yaml
+  - services/moderation-service.yaml
+  - services/signaling-server.yaml
+
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: rajutechie-streamkit-platform

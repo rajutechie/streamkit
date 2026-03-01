@@ -1,0 +1,69 @@
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rajutechie-streamkit.fullname" $ }}-{{ $serviceName }}
+  namespace: {{ include "rajutechie-streamkit.namespace" $ }}
+  labels:
+    {{- include "rajutechie-streamkit.labels" (dict "serviceName" $serviceName "context" $) | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceConfig.component | default "service" }}
+spec:
+  {{- if not $serviceConfig.autoscaling.enabled }}
+  replicas: {{ $serviceConfig.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "rajutechie-streamkit.selectorLabels" (dict "serviceName" $serviceName "context" $) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "rajutechie-streamkit.labels" (dict "serviceName" $serviceName "context" $) | nindent 8 }}
+        app.kubernetes.io/component: {{ $serviceConfig.component | default "service" }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+    spec:
+      containers:
+        - name: {{ $serviceName }}
+          image: {{ include "rajutechie-streamkit.image" (dict "serviceConfig" $serviceConfig "context" $) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ $serviceConfig.port }}
+              protocol: TCP
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ include "rajutechie-streamkit.fullname" $ }}-config
+          {{- if $serviceConfig.env }}
+          env:
+            {{- range $key, $value := $serviceConfig.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          resources:
+            requests:
+              cpu: {{ $serviceConfig.resources.requests.cpu }}
+              memory: {{ $serviceConfig.resources.requests.memory }}
+            limits:
+              cpu: {{ $serviceConfig.resources.limits.cpu }}
+              memory: {{ $serviceConfig.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: {{ $.Values.probes.liveness.path }}
+              port: {{ $serviceConfig.port }}
+            initialDelaySeconds: {{ $.Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ $.Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ $.Values.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ $.Values.probes.readiness.path }}
+              port: {{ $serviceConfig.port }}
+            initialDelaySeconds: {{ $.Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ $.Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ $.Values.probes.readiness.failureThreshold }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,62 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "rajutechie-streamkit.fullname" . }}-api
+  namespace: {{ include "rajutechie-streamkit.namespace" . }}
+  labels:
+    {{- include "rajutechie-streamkit.labels" (dict "serviceName" "api-gateway" "context" $) | nindent 4 }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.api.host }}
+      secretName: {{ .Values.ingress.api.tls.secretName }}
+  rules:
+    - host: {{ .Values.ingress.api.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "rajutechie-streamkit.fullname" . }}-{{ .Values.ingress.api.serviceName }}
+                port:
+                  number: {{ .Values.ingress.api.servicePort }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "rajutechie-streamkit.fullname" . }}-ws
+  namespace: {{ include "rajutechie-streamkit.namespace" . }}
+  labels:
+    {{- include "rajutechie-streamkit.labels" (dict "serviceName" "ws-gateway" "context" $) | nindent 4 }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.ws.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.ws.host }}
+      secretName: {{ .Values.ingress.ws.tls.secretName }}
+  rules:
+    - host: {{ .Values.ingress.ws.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "rajutechie-streamkit.fullname" . }}-{{ .Values.ingress.ws.serviceName }}
+                port:
+                  number: {{ .Values.ingress.ws.servicePort }}
+{{- end }}

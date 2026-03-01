@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LiveStream {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  streamKey       String   @unique
+  hostUserId      String
+  visibility      String   @default("public") // public | private | unlisted
+  status          String   @default("idle")   // idle | live | ended
+  settings        Json     @default("{}")
+  hlsUrl          String?
+  rtmpUrl         String?
+  viewerCount     Int      @default(0)
+  peakViewerCount Int      @default(0)
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  moderationActions StreamModerationAction[]
+}
+
+model StreamModerationAction {
+  id           String   @id @default(uuid())
+  streamId     String
+  type         String   // ban_viewer | disable_chat
+  targetUserId String?
+  performedAt  DateTime @default(now())
+
+  stream LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+}

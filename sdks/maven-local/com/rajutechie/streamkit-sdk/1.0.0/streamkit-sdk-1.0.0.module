@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.rajutechie",
+    "module": "streamkit-sdk",
+    "version": "1.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.3.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "streamkit-sdk-1.0.0.aar",
+          "url": "streamkit-sdk-1.0.0.aar",
+          "size": 186584,
+          "sha512": "d95d8034d1b86801923554b71653ea518f37506917e8f51676edd250b7d8023697ca362b044d14233d7867cbe9211ffc598f8e17707210cbf46b520a4b935f2e",
+          "sha256": "f32f9ea571e5a4df54234d93cad0a11da55f09d2805a72dfa1caac3fd50c180a",
+          "sha1": "f2f43b2a68fe6563ecfeda919e9ef5683816dbae",
+          "md5": "a606f8f249fd9cad3232ed399b2e0490"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.8.0"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "4.12.0"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "io.socket",
+          "module": "socket.io-client",
+          "version": {
+            "requires": "2.1.0"
+          }
+        },
+        {
+          "group": "io.github.webrtc-sdk",
+          "module": "android",
+          "version": {
+            "requires": "125.6422.07"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "streamkit-sdk-1.0.0.aar",
+          "url": "streamkit-sdk-1.0.0.aar",
+          "size": 186584,
+          "sha512": "d95d8034d1b86801923554b71653ea518f37506917e8f51676edd250b7d8023697ca362b044d14233d7867cbe9211ffc598f8e17707210cbf46b520a4b935f2e",
+          "sha256": "f32f9ea571e5a4df54234d93cad0a11da55f09d2805a72dfa1caac3fd50c180a",
+          "sha1": "f2f43b2a68fe6563ecfeda919e9ef5683816dbae",
+          "md5": "a606f8f249fd9cad3232ed399b2e0490"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "streamkit-sdk-1.0.0-sources.jar",
+          "url": "streamkit-sdk-1.0.0-sources.jar",
+          "size": 8744,
+          "sha512": "3dec5496a1d99404e37d9d7a0b934888a0b1ac1a13f84b011f872962643002e7a4a7441405fc172484380d4e79e1c19dbddabcd0c4615488a164b12963dad222",
+          "sha256": "317972c2695e84be3083ea450a4ac77906f5d729c9c406ccac423ffcaa744167",
+          "sha1": "c942461beafc8133e6f12870b4019a6aba72fdcb",
+          "md5": "089af3236855665beb1c5204c67258ee"
+        }
+      ]
+    }
+  ]
+}

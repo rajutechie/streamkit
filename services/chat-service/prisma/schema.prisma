@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Channel {
+  id          String   @id @default(uuid())
+  type        String   // direct | group | public | private
+  name        String?
+  description String?
+  metadata    Json     @default("{}")
+  settings    Json     @default("{}")
+  createdBy   String
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members  ChannelMember[]
+  messages Message[]
+}
+
+model ChannelMember {
+  id        String   @id @default(uuid())
+  channelId String
+  userId    String
+  role      String   @default("member") // owner | admin | moderator | member
+  muted     Boolean  @default(false)
+  banned    Boolean  @default(false)
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  channelId   String
+  senderId    String
+  text        String?
+  attachments Json     @default("[]")
+  replyTo     String?
+  threadId    String?
+  mentions    Json     @default("[]")
+  reactions   Json     @default("[]")
+  readBy      Json     @default("[]")
+  isEdited    Boolean  @default(false)
+  editedAt    DateTime?
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}

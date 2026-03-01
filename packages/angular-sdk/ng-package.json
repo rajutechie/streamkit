@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ng-packagr/ng-packagr/master/src/ng-package.schema.json",
+  "dest": "../../dist/angular-sdk",
+  "lib": {
+    "entryFile": "src/public-api.ts",
+    "flatModuleFile": "rajutechie-streamkit-angular-sdk",
+    "flatModuleOutFile": "rajutechie-streamkit-angular-sdk.js",
+    "umdModuleIds": {
+      "@rajutechie-streamkit/core": "rajutechie-streamkit.core",
+      "rxjs": "rxjs",
+      "rxjs/operators": "rxjs.operators",
+      "@angular/core": "ng.core",
+      "@angular/common": "ng.common"
+    }
+  },
+  "allowedNonPeerDependencies": [
+    "@rajutechie-streamkit/core"
+  ]
+}

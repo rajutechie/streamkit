@@ -1,0 +1,67 @@
+{
+  "name": "@rajutechie-streamkit/core",
+  "version": "0.1.0",
+  "description": "RajutechieStreamKit Core SDK - shared real-time communication primitives for all frontend SDKs",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./models": {
+      "import": "./dist/models/index.mjs",
+      "require": "./dist/models/index.js",
+      "types": "./dist/models/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/client.ts src/models/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/client.ts src/models/index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.0.0",
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rajutechie-streamkit/rajutechie-streamkit.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "rajutechie-streamkit",
+    "realtime",
+    "chat",
+    "video",
+    "webrtc",
+    "sdk"
+  ],
+  "sideEffects": false
+}

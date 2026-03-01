@@ -1,0 +1,28 @@
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rajutechie-streamkit.fullname" $ }}-{{ $serviceName }}
+  namespace: {{ include "rajutechie-streamkit.namespace" $ }}
+  labels:
+    {{- include "rajutechie-streamkit.labels" (dict "serviceName" $serviceName "context" $) | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceConfig.component | default "service" }}
+spec:
+  type: ClusterIP
+  {{- if $serviceConfig.sessionAffinity }}
+  sessionAffinity: {{ $serviceConfig.sessionAffinity }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ $serviceConfig.sessionAffinityTimeout | default 10800 }}
+  {{- end }}
+  selector:
+    {{- include "rajutechie-streamkit.selectorLabels" (dict "serviceName" $serviceName "context" $) | nindent 4 }}
+  ports:
+    - port: {{ $serviceConfig.port }}
+      targetPort: {{ $serviceConfig.port }}
+      protocol: TCP
+      name: http
+{{- end }}
+{{- end }}

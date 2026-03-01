@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rajutechie StreamKit — User Manual (GitHub Dark)</title>
+<style>
+/* ── Reset & base ── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+:root {
+  --sidebar-bg: #161b22;
+  --sidebar-text: #e6edf3;
+  --sidebar-hover: #58a6ff;
+  --content-bg: #0d1117;
+  --content-text: #e6edf3;
+  --accent: #58a6ff;
+  --code-bg: #161b22;
+  --code-text: #e6edf3;
+  --border: #30363d;
+  --heading: #79c0ff;
+  --muted: #8b949e;
+  --tag-bg: #1c2336;
+  --tag-text: #79c0ff;
+  --sidebar-w: 280px;
+}
+html { scroll-behavior:smooth }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--content-bg);
+  color: var(--content-text);
+  display: flex; min-height:100vh; line-height:1.6;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width:var(--sidebar-w); min-width:var(--sidebar-w);
+  background:var(--sidebar-bg); color:var(--sidebar-text);
+  position:fixed; top:0; left:0; height:100vh;
+  overflow-y:auto; z-index:100;
+  display:flex; flex-direction:column;
+  border-right:1px solid #30363d;
+}
+#sidebar::-webkit-scrollbar { width:4px }
+#sidebar::-webkit-scrollbar-track { background:var(--sidebar-bg) }
+#sidebar::-webkit-scrollbar-thumb { background:#30363d; border-radius:2px }
+
+.sidebar-logo {
+  padding:20px 20px 18px; border-bottom:1px solid #30363d;
+  display:flex; align-items:center; gap:10px; flex-shrink:0;
+}
+.sidebar-logo .logo-icon {
+  width:34px; height:34px; background:#1f6feb; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:17px; font-weight:900; color:#fff; flex-shrink:0;
+  border:1px solid #388bfd40;
+}
+.sidebar-logo .logo-text { line-height:1.2 }
+.sidebar-logo .logo-name { font-size:14px; font-weight:700; color:#e6edf3 }
+.sidebar-logo .logo-sub  { font-size:11px; color:#8b949e }
+
+.sidebar-search { padding:10px 14px; border-bottom:1px solid #30363d; flex-shrink:0 }
+.sidebar-search input {
+  width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3;
+  padding:6px 10px; border-radius:6px; font-size:13px; outline:none;
+}
+.sidebar-search input::placeholder { color:#6e7681 }
+.sidebar-search input:focus { border-color:#58a6ff; box-shadow:0 0 0 3px rgba(88,166,255,.1) }
+
+nav { padding:6px 0; flex:1 }
+.nav-section-label {
+  font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  color:#6e7681; padding:14px 16px 4px;
+}
+nav a {
+  display:flex; align-items:center; gap:8px; padding:6px 16px;
+  font-size:13px; color:#8b949e; text-decoration:none;
+  transition:all .12s; border-left:3px solid transparent;
+}
+nav a:hover { color:#e6edf3; background:rgba(88,166,255,.08); border-left-color:#58a6ff }
+nav a.active { color:#58a6ff; background:rgba(88,166,255,.12); border-left-color:#58a6ff; font-weight:600 }
+nav a .nav-num {
+  font-size:10px; background:#21262d; color:#6e7681;
+  border-radius:4px; padding:1px 5px; min-width:20px;
+  text-align:center; flex-shrink:0; font-family:monospace;
+}
+
+.sidebar-footer {
+  padding:12px 16px; border-top:1px solid #30363d; flex-shrink:0;
+  font-size:11px; color:#6e7681;
+}
+.sidebar-footer a { color:#58a6ff; text-decoration:none }
+
+/* ── Main layout ── */
+#main { margin-left:var(--sidebar-w); flex:1; min-width:0 }
+
+.top-bar {
+  background:#161b22; border-bottom:1px solid #30363d;
+  padding:0 40px; height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:50;
+}
+.top-bar-left { font-size:13px; color:#8b949e }
+.top-bar-left span { color:#58a6ff; font-weight:600 }
+.top-bar-right { display:flex; gap:8px }
+
+.badge {
+  font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600;
+  background:#21262d; color:#8b949e; border:1px solid #30363d;
+}
+.badge.green { background:#1b3a27; color:#3fb950; border-color:#2ea04326 }
+.badge.blue  { background:#1a2f5e; color:#79c0ff; border-color:#1f6feb26 }
+.badge.purple{ background:#2d1f6e; color:#d2a8ff; border-color:#8957e526 }
+
+article { padding:40px 48px 80px; max-width:900px }
+
+/* ── Headings ── */
+.section { padding-top:16px }
+.section+.section { border-top:1px solid #21262d; margin-top:8px; padding-top:40px }
+
+h1 { font-size:28px; font-weight:800; color:#e6edf3; margin-bottom:6px }
+h1 .accent { color:#58a6ff }
+.hero-sub { font-size:15px; color:#8b949e; margin-bottom:32px }
+
+h2 {
+  font-size:20px; font-weight:700; color:#79c0ff; margin-bottom:12px;
+  display:flex; align-items:center; gap:10px;
+  padding-bottom:8px; border-bottom:1px solid #21262d;
+}
+h2 .sec-num {
+  font-size:11px; background:#1c2336; color:#58a6ff;
+  border-radius:20px; padding:2px 9px; font-weight:700; flex-shrink:0;
+  border:1px solid #1f6feb30;
+}
+h3 { font-size:15px; font-weight:600; color:#cdd9e5; margin:20px 0 8px }
+p  { margin-bottom:14px; color:#b1bac4; font-size:14px; line-height:1.75 }
+
+/* ── Tags ── */
+.tag { display:inline-block; font-size:11px; font-weight:700; border-radius:4px; padding:2px 7px; margin:2px; }
+.tag.get    { background:#1b3a27; color:#3fb950; border:1px solid #2ea04330 }
+.tag.post   { background:#1a2f5e; color:#79c0ff; border:1px solid #388bfd30 }
+.tag.patch  { background:#3d2b00; color:#ffa657; border:1px solid #d2933030 }
+.tag.delete { background:#3d0000; color:#ff7b72; border:1px solid #f8514930 }
+.tag.ws     { background:#2d1f6e; color:#d2a8ff; border:1px solid #8957e530 }
+
+/* ── Endpoint list ── */
+.endpoint-list { list-style:none; margin-bottom:18px }
+.endpoint-list li {
+  display:flex; align-items:baseline; gap:10px; padding:7px 0;
+  border-bottom:1px solid #21262d; font-size:13px;
+}
+.endpoint-list li:last-child { border-bottom:none }
+.endpoint-list .ep-path { font-family:'SFMono-Regular',Consolas,monospace; color:#c9d1d9; font-size:12.5px }
+.endpoint-list .ep-desc { color:#8b949e; font-size:12px; margin-left:auto }
+
+/* ── Code blocks ── */
+.code-wrap { position:relative; margin:16px 0 20px; border-radius:8px; overflow:hidden; border:1px solid #30363d }
+.code-header {
+  background:#21262d; padding:8px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid #30363d;
+}
+.code-lang { font-size:11px; font-weight:600; color:#8b949e; text-transform:uppercase; letter-spacing:.06em }
+.copy-btn {
+  font-size:11px; font-weight:600; color:#8b949e; background:#30363d;
+  border:1px solid #484f58; border-radius:6px; padding:3px 10px; cursor:pointer; transition:all .15s;
+}
+.copy-btn:hover { background:#484f58; color:#e6edf3 }
+.copy-btn.copied { background:#1b3a27; color:#3fb950; border-color:#2ea04340 }
+
+pre { background:#161b22; margin:0 }
+pre code {
+  display:block; padding:16px 20px;
+  font-size:12.5px; line-height:1.85;
+  font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  color:#e6edf3;
+}
+pre code .cm  { color:#8b949e; font-style:italic }
+pre code .kw  { color:#ff7b72 }
+pre code .str { color:#a5d6ff }
+pre code .num { color:#79c0ff }
+pre code .fn  { color:#d2a8ff }
+pre code .key { color:#ffa657 }
+pre code .punc{ color:#8b949e }
+pre code .url { color:#3fb950; text-decoration:underline }
+
+/* ── Callouts ── */
+.callout {
+  border-radius:6px; padding:12px 16px; margin:16px 0;
+  font-size:13px; display:flex; gap:10px; align-items:flex-start; border:1px solid;
+}
+.callout.info   { background:rgba(31,111,235,.1); border-color:#1f6feb40; border-left:4px solid #1f6feb }
+.callout.warn   { background:rgba(210,153,34,.1); border-color:#9e6a0340; border-left:4px solid #9e6a03 }
+.callout.tip    { background:rgba(63,185,80,.1);  border-color:#2ea04340; border-left:4px solid #3fb950 }
+.callout .ci    { font-size:16px; flex-shrink:0; margin-top:1px }
+.callout p      { margin:0; color:#c9d1d9 }
+
+/* ── Tables ── */
+.tbl-wrap { overflow-x:auto; margin:16px 0; border:1px solid #30363d; border-radius:6px }
+table { width:100%; border-collapse:collapse; font-size:13px }
+th {
+  background:#161b22; text-align:left; padding:9px 14px;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  color:#8b949e; border-bottom:1px solid #30363d;
+}
+td { padding:9px 14px; border-bottom:1px solid #21262d; vertical-align:top; color:#b1bac4 }
+tr:last-child td { border-bottom:none }
+tr:hover td { background:#161b22 }
+td code, th code {
+  font-family:'SFMono-Regular',Consolas,monospace; font-size:11.5px;
+  background:#21262d; padding:2px 6px; border-radius:4px; color:#79c0ff;
+  border:1px solid #30363d;
+}
+.required { color:#ff7b72; font-size:10px; font-weight:700; text-transform:uppercase }
+td.yes { color:#3fb950; font-weight:600 }
+td.no  { color:#ff7b72; font-weight:600 }
+
+/* ── Cards ── */
+.service-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin:16px 0 }
+.service-card {
+  background:#161b22; border:1px solid #30363d; border-radius:8px;
+  padding:14px 16px; transition:border-color .15s;
+}
+.service-card:hover { border-color:#58a6ff }
+.service-card .svc-name { font-size:13px; font-weight:700; color:#e6edf3; margin-bottom:4px }
+.service-card .svc-port { font-size:11px; color:#58a6ff; font-family:monospace; font-weight:600 }
+.service-card .svc-desc { font-size:11px; color:#8b949e; margin-top:4px }
+.service-card .svc-icon { font-size:22px; margin-bottom:6px }
+.service-card .svc-arrow { font-size:11px; color:#58a6ff; margin-top:8px; font-weight:600 }
+
+.feature-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px; margin:16px 0 }
+.feature-item {
+  display:flex; align-items:flex-start; gap:10px;
+  background:#161b22; border:1px solid #30363d; border-radius:8px; padding:12px 14px;
+  transition:border-color .15s;
+}
+.feature-item:hover { border-color:#58a6ff }
+.feature-item .fi-icon {
+  width:32px; height:32px; border-radius:6px; background:#1c2336;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; flex-shrink:0;
+}
+.feature-item .fi-text .fi-name { font-size:13px; font-weight:600; color:#e6edf3 }
+.feature-item .fi-text .fi-desc { font-size:11px; color:#8b949e }
+
+/* ── Inline code ── */
+:not(pre) > code {
+  font-family:'SFMono-Regular',Consolas,monospace; font-size:85%;
+  background:#161b22; color:#ff7b72;
+  padding:2px 6px; border-radius:4px; border:1px solid #30363d;
+}
+
+/* ── Step list ── */
+.step-list { list-style:none; margin:16px 0; counter-reset:step }
+.step-list li {
+  display:flex; gap:14px; align-items:flex-start;
+  padding:10px 0; border-bottom:1px solid #21262d; font-size:13.5px; color:#b1bac4;
+}
+.step-list li:last-child { border-bottom:none }
+.step-list li::before {
+  counter-increment:step; content:counter(step);
+  min-width:26px; height:26px; border-radius:50%;
+  background:#1f6feb; color:#ffffff; font-size:12px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;
+}
+.step-list li .step-num { display:none }
+.step-list li .step-text { font-size:13px; color:#b1bac4; line-height:1.65 }
+.step-list li .step-text strong { color:#e6edf3 }
+
+/* ── Screenshot placeholder ── */
+.screenshot-placeholder {
+  background:#161b22; border:2px dashed #30363d;
+  border-radius:8px; padding:28px 20px;
+  text-align:center; color:#6e7681;
+  font-size:12px; font-style:italic; margin:16px 0;
+  font-family:'SFMono-Regular',Consolas,monospace;
+}
+.screenshot-placeholder .sp-icon { font-size:28px; margin-bottom:8px; display:block }
+
+/* ── Tip card ── */
+.tip-card {
+  background:#161b22; border:1px solid #30363d;
+  border-left:4px solid #58a6ff; border-radius:0 8px 8px 0;
+  padding:12px 16px; margin:16px 0; font-size:13px; color:#b1bac4;
+}
+.tip-card strong { color:#e6edf3 }
+.tip-card .tc-icon { font-size:18px; flex-shrink:0 }
+.tip-card .tc-body .tc-title { font-weight:700; color:#58a6ff; font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px }
+.tip-card .tc-body p { margin:0; font-size:13px }
+
+/* ── FAQ items ── */
+.faq-list { margin:16px 0; display:flex; flex-direction:column; gap:8px }
+.faq-item {
+  border:1px solid #30363d; border-radius:8px; margin-bottom:8px; overflow:hidden;
+}
+.faq-question {
+  padding:12px 16px; cursor:pointer; font-size:13.5px; font-weight:600; color:#e6edf3;
+  display:flex; justify-content:space-between; align-items:center;
+  background:#161b22; user-select:none; transition:background .15s;
+  gap:10px;
+}
+.faq-question:hover { background:#21262d }
+.faq-question .fq-icon { font-size:18px; flex-shrink:0 }
+.faq-question .fq-chevron {
+  font-size:12px; color:#8b949e; transition:transform .2s; flex-shrink:0;
+}
+.faq-question .chevron {
+  font-size:12px; color:#8b949e; transition:transform .2s; flex-shrink:0;
+}
+.faq-item.open .fq-chevron { transform:rotate(180deg) }
+.faq-question.open .chevron { transform:rotate(180deg) }
+.faq-answer {
+  display:none; padding:12px 16px; font-size:13px;
+  background:#0d1117; border-top:1px solid #30363d; color:#b1bac4; line-height:1.7;
+}
+.faq-item.open .faq-answer { display:block }
+.faq-answer.open { display:block }
+.faq-answer code {
+  font-family:'SFMono-Regular',Consolas,monospace; font-size:11.5px;
+  background:#21262d; padding:2px 6px; border-radius:4px; color:#79c0ff;
+  border:1px solid #30363d;
+}
+
+/* ── Keyboard shortcut badge ── */
+kbd {
+  display:inline-block; background:#21262d; color:#c9d1d9;
+  border:1px solid #484f58; border-bottom:2px solid #30363d;
+  border-radius:6px; padding:2px 7px; font-size:11.5px;
+  font-family:'SFMono-Regular',Consolas,monospace; white-space:nowrap;
+}
+
+/* ── ASCII diagram ── */
+.ascii-diagram {
+  background:#161b22; border:1px solid #30363d; border-radius:8px;
+  padding:16px 20px; margin:16px 0; overflow-x:auto;
+  font-family:'SFMono-Regular',Consolas,monospace; font-size:12px;
+  color:#8b949e; line-height:1.6; white-space:pre;
+}
+.ascii-diagram .hl  { color:#58a6ff }
+.ascii-diagram .hl2 { color:#3fb950 }
+
+/* ── Status dots ── */
+.status-dot {
+  display:inline-block; width:10px; height:10px;
+  border-radius:50%; margin-right:6px; vertical-align:middle;
+}
+.status-dot.online  { background:#3fb950; box-shadow:0 0 0 2px rgba(63,185,80,.2) }
+.status-dot.away    { background:#d29922; box-shadow:0 0 0 2px rgba(210,153,34,.2) }
+.status-dot.dnd     { background:#f85149; box-shadow:0 0 0 2px rgba(248,81,73,.2) }
+.status-dot.offline { background:#484f58 }
+
+/* ── Responsive ── */
+@media(max-width:900px) { :root{--sidebar-w:240px} article{padding:28px 24px 60px} .top-bar{padding:0 24px} }
+@media(max-width:680px) {
+  #sidebar{transform:translateX(-100%);transition:transform .25s}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  .top-bar{padding:0 16px}
+  article{padding:20px 16px 60px}
+  #menu-toggle{display:flex}
+}
+#menu-toggle { display:none; background:none; border:none; cursor:pointer; flex-direction:column; gap:4px; padding:4px }
+#menu-toggle span { display:block; width:20px; height:2px; background:#8b949e; border-radius:1px }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">S</div>
+    <div class="logo-text">
+      <div class="logo-name">StreamKit</div>
+      <div class="logo-sub">User Manual</div>
+    </div>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="nav-search" placeholder="Search sections..." oninput="filterNav(this.value)">
+  </div>
+  <nav id="nav-list">
+    <div class="nav-section-label">Getting Started</div>
+    <a href="#s01" class="nav-link"><span class="nav-num">01</span> Welcome to StreamKit</a>
+    <a href="#s02" class="nav-link"><span class="nav-num">02</span> Setting Up Your Account</a>
+    <a href="#s03" class="nav-link"><span class="nav-num">03</span> Navigating the App</a>
+    <div class="nav-section-label">Messaging</div>
+    <a href="#s04" class="nav-link"><span class="nav-num">04</span> Chat &amp; Channels</a>
+    <a href="#s05" class="nav-link"><span class="nav-num">05</span> Sending Messages</a>
+    <a href="#s06" class="nav-link"><span class="nav-num">06</span> Reactions &amp; Threads</a>
+    <div class="nav-section-label">Video Communication</div>
+    <a href="#s07" class="nav-link"><span class="nav-num">07</span> One-on-One Video Calls</a>
+    <a href="#s08" class="nav-link"><span class="nav-num">08</span> Group Meetings</a>
+    <a href="#s09" class="nav-link"><span class="nav-num">09</span> Screen Sharing &amp; Controls</a>
+    <div class="nav-section-label">Live Streaming</div>
+    <a href="#s10" class="nav-link"><span class="nav-num">10</span> Watching Live Streams</a>
+    <a href="#s11" class="nav-link"><span class="nav-num">11</span> Going Live as a Host</a>
+    <div class="nav-section-label">Account &amp; Preferences</div>
+    <a href="#s12" class="nav-link"><span class="nav-num">12</span> Profile &amp; Presence Status</a>
+    <a href="#s13" class="nav-link"><span class="nav-num">13</span> Notifications &amp; Alerts</a>
+    <a href="#s14" class="nav-link"><span class="nav-num">14</span> Privacy &amp; Security</a>
+    <div class="nav-section-label">Help</div>
+    <a href="#s15" class="nav-link"><span class="nav-num">15</span> Troubleshooting</a>
+    <a href="#s16" class="nav-link"><span class="nav-num">16</span> Keyboard Shortcuts</a>
+  </nav>
+  <div class="sidebar-footer">
+    Platform: <strong style="color:#f1f5f9">Rajutechie StreamKit</strong><br>
+    Manual version: <strong style="color:#f1f5f9">1.0.0</strong> &nbsp;|&nbsp; Updated: Feb 2026
+  </div>
+</aside>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<div id="main">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button id="menu-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <span>Rajutechie StreamKit</span> &mdash; User Manual
+    </div>
+    <div class="top-bar-right">
+      <span class="badge green">v1.0.0</span>
+      <span class="badge blue">End-User Guide</span>
+    </div>
+  </div>
+
+  <article>
+
+    <!-- ───────────── HERO ───────────── -->
+    <h1><span class="accent">StreamKit</span> User Manual</h1>
+    <p class="hero-sub">Your all-in-one real-time communication platform — chat, video calls, group meetings, and live streaming in one place.</p>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 01 — WELCOME
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s01">
+      <h2><span class="sec-num">01</span> Welcome to StreamKit</h2>
+      <p>StreamKit is Rajutechie's unified real-time communication platform. Whether you're exchanging quick messages with a teammate, hopping on a video call, hosting a company-wide meeting, or broadcasting a live stream to thousands of viewers, StreamKit brings all of it under one roof — no plugins, no downloads required for viewers.</p>
+
+      <h3>Platform Features</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="fi-icon">💬</div>
+          <div class="fi-text">
+            <div class="fi-name">Chat</div>
+            <div class="fi-desc">Real-time text messaging, channels, threads, and file sharing</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">📹</div>
+          <div class="fi-text">
+            <div class="fi-name">Video Calls</div>
+            <div class="fi-desc">High-quality 1-on-1 video and audio calling with screen share</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">👥</div>
+          <div class="fi-text">
+            <div class="fi-name">Group Meetings</div>
+            <div class="fi-desc">Scheduled or instant meetings with multiple participants</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🎙️</div>
+          <div class="fi-text">
+            <div class="fi-name">Live Streaming</div>
+            <div class="fi-desc">RTMP broadcast to unlimited viewers with live chat interaction</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🖥️</div>
+          <div class="fi-text">
+            <div class="fi-name">Screen Share</div>
+            <div class="fi-desc">Share your entire screen, a window, or a browser tab during calls</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🔔</div>
+          <div class="fi-text">
+            <div class="fi-name">Push Notifications</div>
+            <div class="fi-desc">Browser and mobile push alerts for calls, messages, and streams</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Quick-Start Paths</h3>
+      <p>Not sure where to begin? Pick the path that matches what you want to do right now:</p>
+      <div class="service-grid">
+        <div class="service-card">
+          <div class="svc-icon">💬</div>
+          <div class="svc-name">Just chatting?</div>
+          <div class="svc-desc">Browse channels and send your first message</div>
+          <div class="svc-arrow">Go to Section 04 &rarr;</div>
+        </div>
+        <div class="service-card">
+          <div class="svc-icon">📹</div>
+          <div class="svc-name">Making a call?</div>
+          <div class="svc-desc">Start a 1-on-1 video call from any user's profile</div>
+          <div class="svc-arrow">Go to Section 07 &rarr;</div>
+        </div>
+        <div class="service-card">
+          <div class="svc-icon">👥</div>
+          <div class="svc-name">Hosting a meeting?</div>
+          <div class="svc-desc">Schedule and launch a group meeting for your team</div>
+          <div class="svc-arrow">Go to Section 08 &rarr;</div>
+        </div>
+        <div class="service-card">
+          <div class="svc-icon">🎙️</div>
+          <div class="svc-name">Going live?</div>
+          <div class="svc-desc">Set up OBS Studio and broadcast your first stream</div>
+          <div class="svc-arrow">Go to Section 11 &rarr;</div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <p><strong>Supported Browsers:</strong> Chrome 90+, Firefox 88+, Microsoft Edge 90+, Safari 15+. For the best experience with screen sharing and video calls, Chrome or Edge is recommended. <strong>Mobile:</strong> iOS 15+ and Android 9+ are supported via the StreamKit web app in your mobile browser.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 02 — SETTING UP YOUR ACCOUNT
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s02">
+      <h2><span class="sec-num">02</span> Setting Up Your Account</h2>
+      <p>Getting started with StreamKit takes about two minutes. Follow the steps below to create your account and configure your device permissions.</p>
+
+      <h3>Account Creation Steps</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Open the app URL</strong> provided by your administrator (e.g., <code>https://stream.yourorg.com</code>) in a supported browser.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Enter your display name and email address</strong> on the registration screen. Your display name is what other users will see in chats and calls.</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Confirm your email address</strong> by clicking the verification link sent to your inbox. Check your spam folder if it doesn't arrive within 2 minutes.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text"><strong>Grant camera and microphone permissions</strong> when prompted by your browser. These are required for video calls and meetings. You can grant them later in your browser settings.</div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-text"><strong>Upload a profile avatar (optional)</strong> — a square image (JPG or PNG, max 2 MB). You can always do this later from your Profile settings.</div>
+        </li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p>You can sign in with an existing account token if your admin provides one — simply paste the token on the login screen instead of registering a new account. This is useful for single-sign-on (SSO) environments.</p>
+      </div>
+
+      <h3>Account Fields Reference</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Required?</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>displayName</code></td><td class="yes">Yes</td><td>The name shown to other users in chats, calls, and meetings. Can be changed at any time in Profile settings.</td></tr>
+            <tr><td><code>email</code></td><td class="yes">Yes</td><td>Used for account verification, email notifications, and account recovery. Must be a valid email address.</td></tr>
+            <tr><td><code>avatarUrl</code></td><td class="no">No</td><td>URL or uploaded image for your profile picture. If omitted, StreamKit generates an initial-based avatar automatically.</td></tr>
+            <tr><td><code>role</code></td><td class="no">No</td><td>Assigned by your administrator. Determines access levels: <code>user</code> (default), <code>moderator</code>, or <code>admin</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Device Permissions Explained</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="fi-icon">📷</div>
+          <div class="fi-text">
+            <div class="fi-name">Camera</div>
+            <div class="fi-desc">Required for video calls and meetings. You can disable it per-call using the camera toggle button.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🎤</div>
+          <div class="fi-text">
+            <div class="fi-name">Microphone</div>
+            <div class="fi-desc">Required for audio in calls and meetings. You can mute yourself at any time during a call.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🔔</div>
+          <div class="fi-text">
+            <div class="fi-name">Notifications</div>
+            <div class="fi-desc">Allows StreamKit to send browser push notifications for incoming calls and messages, even when the tab is in the background.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 03 — NAVIGATING THE APP
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s03">
+      <h2><span class="sec-num">03</span> Navigating the App</h2>
+      <p>StreamKit's interface is divided into four main areas. Once you're familiar with the layout, getting around is fast and intuitive.</p>
+
+      <h3>App Layout Overview</h3>
+      <div class="ascii-diagram">
+<span class="hl">+------------------+------------------------------------------+</span>
+<span class="hl">|                  |  TOP BAR (title, status, user avatar)    |</span>
+<span class="hl">|   LEFT SIDEBAR   +------------------------------------------+</span>
+|   Navigation     |                                          |
+|                  |          MAIN CONTENT AREA               |
+|  [Chat]          |   (Messages / Call / Meeting / Stream)   |
+|  [Calls]         |                                          |
+|  [Meetings]      |                                          |
+|  [Live]          +------------------------------------------+
+|  [Profile]       |  <span class="hl2">PRESENCE BAR</span> (online users, status)   |
+<span class="hl">+------------------+------------------------------------------+</span>
+      </div>
+
+      <h3>Navigation Areas</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Area</th><th>Icon</th><th>What It Does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Chat</td><td>💬</td><td>Browse and join channels, view direct messages, search conversation history</td></tr>
+            <tr><td>Calls</td><td>📹</td><td>View call history, start a new call, see who is currently available</td></tr>
+            <tr><td>Meetings</td><td>👥</td><td>Schedule new meetings, join via meeting ID, see upcoming meetings</td></tr>
+            <tr><td>Live</td><td>🎙️</td><td>Browse active live streams, join as a viewer, or go live as a host</td></tr>
+            <tr><td>Profile</td><td>👤</td><td>Edit display name, avatar, presence status, and notification preferences</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Key UI Areas</h3>
+      <div class="screenshot-placeholder">
+        <span class="sp-icon">🖼️</span>
+        [ Screenshot: StreamKit main dashboard — left sidebar with nav icons, center content area showing channel list ]
+      </div>
+
+      <div class="screenshot-placeholder">
+        <span class="sp-icon">🖼️</span>
+        [ Screenshot: Top bar — user avatar, presence indicator, notification bell, settings gear ]
+      </div>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p><strong>Keyboard navigation:</strong> Press <kbd>Tab</kbd> to move between interactive elements and <kbd>Enter</kbd> or <kbd>Space</kbd> to activate them. The sidebar can be toggled with the hamburger button on mobile, or by pressing <kbd>Ctrl</kbd>+<kbd>\\</kbd> on desktop.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 04 — CHAT & CHANNELS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s04">
+      <h2><span class="sec-num">04</span> Chat &amp; Channels</h2>
+      <p>Channels are the core unit of conversation in StreamKit. Think of them as named group chat rooms — organized around teams, topics, or projects.</p>
+
+      <h3>Channel Types</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="fi-icon">🌐</div>
+          <div class="fi-text">
+            <div class="fi-name">Public Channels</div>
+            <div class="fi-desc">Visible and joinable by all users on the platform without an invitation</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🔒</div>
+          <div class="fi-text">
+            <div class="fi-name">Private Channels</div>
+            <div class="fi-desc">Invite-only channels. Only members can see the channel and its messages</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">👁️</div>
+          <div class="fi-text">
+            <div class="fi-name">Unlisted Channels</div>
+            <div class="fi-desc">Not shown in the public directory, but joinable via a direct link</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Finding and Joining a Channel</h3>
+      <p>Click the <strong>Chat</strong> icon in the left sidebar, then click <strong>Browse Channels</strong>. Use the search box to find a channel by name or keyword. Click <strong>Join</strong> next to any public channel to become a member immediately.</p>
+
+      <h3>Creating a New Channel</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">Click the <strong>+ New Channel</strong> button at the top of the channel list in the Chat sidebar.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Enter a <strong>channel name</strong> (lowercase letters, numbers, and hyphens only, max 50 characters).</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">Add an optional <strong>description</strong> so other users know what the channel is for.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">Select the <strong>visibility</strong>: Public, Private, or Unlisted.</div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-text">Click <strong>Create Channel</strong>. You are automatically made the channel owner.</div>
+        </li>
+      </ol>
+
+      <h3>Member Roles</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>Permissions</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Owner</strong></td><td>Full control — edit settings, invite or remove members, delete the channel, pin messages</td></tr>
+            <tr><td><strong>Member</strong></td><td>Send messages, upload files, react, reply to threads, view message history</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Channel Settings Reference</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Setting</th><th>Values</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>name</code></td><td>String</td><td>Unique identifier for the channel. Shown in the URL and channel list.</td></tr>
+            <tr><td><code>description</code></td><td>String</td><td>Short description displayed in the channel browser and above the message list.</td></tr>
+            <tr><td><code>visibility</code></td><td><code>public</code> / <code>private</code> / <code>unlisted</code></td><td>Controls who can discover and join the channel.</td></tr>
+            <tr><td><code>chatEnabled</code></td><td><code>true</code> / <code>false</code></td><td>If false, the message composer is disabled and the channel becomes read-only. Useful for announcement channels.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <p><strong>Channel capacity:</strong> Channels support unlimited members. <strong>Message retention:</strong> By default, message history is retained indefinitely. Your administrator may configure a retention policy (e.g., 90 days) — contact them for details about your organization's data policy.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 05 — SENDING MESSAGES
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s05">
+      <h2><span class="sec-num">05</span> Sending Messages</h2>
+      <p>The message composer is at the bottom of every channel and direct message view. It supports rich text, file attachments, and user mentions.</p>
+
+      <h3>Composing and Sending a Message</h3>
+      <p>Click the message input field, type your message, and press <kbd>Enter</kbd> to send. To add a newline without sending, press <kbd>Shift</kbd>+<kbd>Enter</kbd>.</p>
+
+      <h3>Attaching Files and Images</h3>
+      <p>Click the paperclip icon (or drag and drop a file into the message input area) to attach files. Supported formats: images (JPG, PNG, GIF, WebP), documents (PDF, DOCX, XLSX, TXT), and videos (MP4, WebM). Maximum file size is <strong>50 MB per attachment</strong>.</p>
+
+      <div class="screenshot-placeholder">
+        <span class="sp-icon">🖼️</span>
+        [ Screenshot: Message composer with attachment button, emoji picker, and send button highlighted ]
+      </div>
+
+      <h3>Mentioning a User</h3>
+      <p>Type <code>@</code> followed by the user's display name to trigger the mention autocomplete. Select the user from the dropdown and they will receive a notification. Use <code>@everyone</code> to notify all channel members (moderators and owners only).</p>
+
+      <h3>Slash Commands</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Command</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>/me &lt;text&gt;</code></td><td>Sends an action message (e.g., "<em>Alice is away</em>")</td></tr>
+            <tr><td><code>/clear</code></td><td>Clears the message composer (does not delete sent messages)</td></tr>
+            <tr><td><code>/invite @user</code></td><td>Invites a user to the current private channel (owner only)</td></tr>
+            <tr><td><code>/leave</code></td><td>Leaves the current channel</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Editing and Deleting Your Messages</h3>
+      <p>Hover over any of your own messages to reveal the action toolbar. Click the pencil icon to <strong>edit</strong> the message in place, or click the trash icon to <strong>delete</strong> it. Deleted messages are replaced with "<em>This message was deleted</em>" for other users who saw it.</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <p><strong>Message character limit:</strong> Each message can contain up to 4,000 characters. For longer content, consider uploading a text file as an attachment.</p>
+      </div>
+
+      <h3>Example Message Payload</h3>
+      <p>This is the underlying data structure for a message — useful for understanding how StreamKit processes and stores messages:</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">JSON</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code><span class="punc">{</span>
+  <span class="key">"id"</span><span class="punc">:</span> <span class="str">"msg_7f3a2b1c"</span><span class="punc">,</span>
+  <span class="key">"channelId"</span><span class="punc">:</span> <span class="str">"chan_general"</span><span class="punc">,</span>
+  <span class="key">"senderId"</span><span class="punc">:</span> <span class="str">"usr_alice42"</span><span class="punc">,</span>
+  <span class="key">"content"</span><span class="punc">:</span> <span class="str">"Hey @bob, can you review the design doc?"</span><span class="punc">,</span>
+  <span class="key">"mentions"</span><span class="punc">:</span> <span class="punc">[</span><span class="str">"usr_bob99"</span><span class="punc">],</span>
+  <span class="key">"attachments"</span><span class="punc">:</span> <span class="punc">[],</span>
+  <span class="key">"timestamp"</span><span class="punc">:</span> <span class="str">"2026-02-28T10:34:00Z"</span><span class="punc">,</span>
+  <span class="key">"edited"</span><span class="punc">:</span> <span class="kw">false</span><span class="punc">,</span>
+  <span class="key">"reactions"</span><span class="punc">:</span> <span class="punc">{}</span>
+<span class="punc">}</span></code></pre>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 06 — REACTIONS & THREADS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s06">
+      <h2><span class="sec-num">06</span> Reactions &amp; Threads</h2>
+      <p>StreamKit makes it easy to engage with messages without cluttering the chat — use emoji reactions, threaded replies, and pinned messages to keep conversations organized.</p>
+
+      <h3>Adding Emoji Reactions</h3>
+      <p>Hover over any message to reveal its action toolbar, then click the smiley face icon to open the emoji reaction picker. Select an emoji to add your reaction. Click the same emoji again to remove it. Reactions are displayed as grouped counters below the message — click any reaction to see who reacted.</p>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p><strong>Long-press on mobile</strong> to open message options, including the emoji reaction picker, reply, edit, and delete actions.</p>
+      </div>
+
+      <h3>Thread Replies</h3>
+      <p>To keep a focused conversation without interrupting the main channel flow, use threads. Hover over a message and click <strong>Reply in Thread</strong>. A thread panel slides open on the right where you can continue the conversation. Thread replies show a preview in the main channel so others can follow along.</p>
+
+      <div class="screenshot-placeholder">
+        <span class="sp-icon">🖼️</span>
+        [ Screenshot: Thread panel open on the right side, showing replies to a parent message ]
+      </div>
+
+      <h3>Read Receipts</h3>
+      <p>In direct messages and small channels (fewer than 20 members), you'll see checkmark indicators below your messages showing who has read them. A single checkmark means the message was delivered; a double checkmark (shown with member avatars) means it has been read by those users.</p>
+
+      <h3>Pinning Messages</h3>
+      <p>Channel owners and moderators can pin important messages so they're easy to find later. Hover over a message, click the three-dot menu, and select <strong>Pin Message</strong>. Pinned messages are visible by clicking the pin icon at the top of the channel. Up to 10 messages can be pinned per channel.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 07 — ONE-ON-ONE VIDEO CALLS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s07">
+      <h2><span class="sec-num">07</span> One-on-One Video Calls</h2>
+      <p>StreamKit lets you start a high-quality video or audio call with any user directly from a chat or their profile page — no scheduling required.</p>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <p>Make sure you've allowed camera and microphone permissions in your browser before starting a call. If you haven't, your browser will prompt you when the call begins. You can also pre-grant permissions in your browser's site settings.</p>
+      </div>
+
+      <h3>Starting a Call</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">Open a <strong>direct message</strong> with the user, or click their <strong>profile avatar</strong> anywhere in the app.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Click the <strong>video camera icon</strong> for a video call, or the <strong>phone icon</strong> for an audio-only call.</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">StreamKit will ring the other user. Wait for them to accept. You can cancel the outgoing call at any time by clicking <strong>End Call</strong>.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">Once connected, the call window opens. Use the controls at the bottom to manage audio, video, and more.</div>
+        </li>
+      </ol>
+
+      <h3>Accepting or Rejecting an Incoming Call</h3>
+      <p>When someone calls you, a notification banner appears at the top of the screen (and as a browser push notification if the tab is in the background). Click <strong>Accept</strong> (green button) to join the call or <strong>Decline</strong> (red button) to reject it. Declining sends a "missed call" notification to the caller.</p>
+
+      <h3>In-Call Controls</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Control</th><th>Icon</th><th>Shortcut</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mute / Unmute</td><td>🎤</td><td><kbd>M</kbd></td><td>Toggle your microphone on and off</td></tr>
+            <tr><td>Camera On / Off</td><td>📷</td><td><kbd>V</kbd></td><td>Enable or disable your video feed</td></tr>
+            <tr><td>Share Screen</td><td>🖥️</td><td><kbd>S</kbd></td><td>Share your screen, window, or browser tab</td></tr>
+            <tr><td>Hang Up</td><td>📵</td><td><kbd>Esc</kbd></td><td>End the call for both participants</td></tr>
+            <tr><td>Switch Camera</td><td>🔄</td><td>—</td><td>Toggle between front and rear camera (mobile only)</td></tr>
+            <tr><td>Full Screen</td><td>⛶</td><td><kbd>F</kbd></td><td>Expand the call to fill the entire screen</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Call Quality Indicators</h3>
+      <p>A small signal-strength icon in the corner of each participant's video tile shows connection quality: green (excellent), yellow (fair), red (poor). If you see persistent red indicators, try closing other browser tabs or moving closer to your Wi-Fi router.</p>
+
+      <h3>Call Duration and History</h3>
+      <p>An elapsed timer at the top of the call window shows how long the call has been running. After the call ends, a summary (duration, participants, timestamp) is logged in the <strong>Calls</strong> section of the sidebar and in your direct message thread with that user.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 08 — GROUP MEETINGS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s08">
+      <h2><span class="sec-num">08</span> Group Meetings</h2>
+      <p>Meetings in StreamKit are designed for structured multi-participant sessions — they have a defined host, can be scheduled in advance, and include additional moderation controls compared to regular calls.</p>
+
+      <h3>Meetings vs. Calls</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Feature</th><th>Video Call</th><th>Group Meeting</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Participants</td><td>2 (1-on-1)</td><td>Up to the platform limit (see below)</td></tr>
+            <tr><td>Scheduling</td><td>Instant only</td><td>Instant or scheduled in advance</td></tr>
+            <tr><td>Host controls</td><td>No</td><td>Yes (mute all, remove, etc.)</td></tr>
+            <tr><td>Raise hand</td><td>No</td><td>Yes</td></tr>
+            <tr><td>Join by link/ID</td><td>No</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Scheduling a Meeting</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">Click the <strong>Meetings</strong> icon in the left sidebar, then click <strong>Schedule Meeting</strong>.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Enter a <strong>meeting title</strong> and optional description.</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">Set the <strong>start date and time</strong> and expected <strong>duration</strong>.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">Add <strong>participants</strong> by typing their names or email addresses. They'll receive an in-app notification and email invite.</div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-text">Click <strong>Create Meeting</strong>. A unique meeting link and ID are generated automatically.</div>
+        </li>
+      </ol>
+
+      <h3>Joining a Meeting</h3>
+      <p>You can join a meeting three ways: click the link in your notification or invite email; go to the <strong>Meetings</strong> section and click <strong>Join</strong> next to an upcoming meeting; or click <strong>Join by ID</strong> and enter the meeting ID manually.</p>
+
+      <h3>Meeting Controls</h3>
+      <p>All video call controls apply (mute, camera, screen share, hang up, full screen), plus these meeting-specific controls:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Control</th><th>Shortcut</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Raise Hand</td><td><kbd>H</kbd></td><td>Signal to the host that you'd like to speak</td></tr>
+            <tr><td>Lower Hand</td><td><kbd>H</kbd></td><td>Toggle — same key lowers a raised hand</td></tr>
+            <tr><td>Participant List</td><td><kbd>P</kbd></td><td>Open/close the panel showing all participants and their status</td></tr>
+            <tr><td>Chat Panel</td><td><kbd>C</kbd></td><td>Open/close in-meeting chat (separate from channel chat)</td></tr>
+            <tr><td>Push-to-Talk</td><td><kbd>Space</kbd> (hold)</td><td>Temporarily unmute while you hold Space, then mute again on release</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Host Controls</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Control</th><th>Description</th><th>Who Can Use It</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mute All</td><td>Mutes every participant's microphone at once. Participants can unmute themselves unless "hard mute" is enabled.</td><td>Host only</td></tr>
+            <tr><td>Remove Participant</td><td>Removes a specific participant from the meeting immediately. They can re-join unless the host locks the meeting.</td><td>Host only</td></tr>
+            <tr><td>Lock Meeting</td><td>Prevents new participants from joining, even with the correct link/ID.</td><td>Host only</td></tr>
+            <tr><td>End Meeting</td><td>Ends the meeting for all participants immediately. A summary is generated.</td><td>Host only</td></tr>
+            <tr><td>Transfer Host</td><td>Passes host privileges to another participant.</td><td>Host only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <p><strong>Maximum participants:</strong> The default meeting capacity depends on your administrator's server configuration. Contact your admin if you need to host a large meeting exceeding the default limit. For very large audiences, consider using the <strong>Live Streaming</strong> feature instead.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 09 — SCREEN SHARING & IN-CALL CONTROLS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s09">
+      <h2><span class="sec-num">09</span> Screen Sharing &amp; In-Call Controls</h2>
+      <p>Screen sharing lets you present your work, walk through documents, or demonstrate software to call and meeting participants in real time.</p>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <p>Screen sharing requires <strong>Chrome or Edge</strong>. Firefox supports window sharing only (not individual browser tabs or full-screen sharing). Safari does not support screen sharing at this time.</p>
+      </div>
+
+      <h3>How to Share Your Screen</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">During a call or meeting, click the <strong>Share Screen</strong> button (monitor icon) in the control bar, or press <kbd>S</kbd>.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Your browser will show a picker dialog. Choose to share your <strong>entire screen</strong>, a specific <strong>application window</strong>, or a <strong>browser tab</strong>.</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">Click <strong>Share</strong> in the browser dialog. Other participants immediately see your shared content.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">A red indicator appears in the control bar showing that your screen is being shared. Click <strong>Stop Sharing</strong> or click the indicator to end the screen share.</div>
+        </li>
+      </ol>
+
+      <h3>Presenter Mode</h3>
+      <p>When you begin sharing your screen, StreamKit automatically switches the remote participants' layout to <strong>Presenter Mode</strong> — your screen share fills most of the view and other video tiles shrink to a strip at the bottom. You can always switch back to the Gallery view using the layout toggle in the top-right of the call window.</p>
+
+      <h3>Complete In-Call Controls Reference</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Windows / Linux</th><th>Mac</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mute / Unmute</td><td><kbd>M</kbd></td><td><kbd>M</kbd></td><td>Toggle your microphone</td></tr>
+            <tr><td>Camera On / Off</td><td><kbd>V</kbd></td><td><kbd>V</kbd></td><td>Toggle your video feed</td></tr>
+            <tr><td>Share Screen</td><td><kbd>S</kbd></td><td><kbd>S</kbd></td><td>Start or stop screen sharing</td></tr>
+            <tr><td>Hang Up / Close</td><td><kbd>Esc</kbd></td><td><kbd>Esc</kbd></td><td>End the call or close a modal</td></tr>
+            <tr><td>Full Screen</td><td><kbd>F</kbd></td><td><kbd>F</kbd></td><td>Toggle full-screen mode</td></tr>
+            <tr><td>Push-to-Talk</td><td><kbd>Space</kbd> (hold)</td><td><kbd>Space</kbd> (hold)</td><td>Temporarily unmute while held</td></tr>
+            <tr><td>Raise / Lower Hand</td><td><kbd>H</kbd></td><td><kbd>H</kbd></td><td>Signal to the host (meetings only)</td></tr>
+            <tr><td>Participant List</td><td><kbd>P</kbd></td><td><kbd>P</kbd></td><td>Toggle participant panel</td></tr>
+            <tr><td>Chat Panel</td><td><kbd>C</kbd></td><td><kbd>C</kbd></td><td>Toggle in-call chat sidebar</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Picture-in-Picture Mode</h3>
+      <p>Click the <strong>Picture-in-Picture</strong> button (the small floating window icon) in the call controls to detach the video call into a small overlay window. This lets you continue using StreamKit chat or browse other apps while keeping an eye on participants. Click the PiP window to return to the full call view.</p>
+
+      <h3>Stopping Screen Share</h3>
+      <p>To stop sharing, either click <strong>Stop Sharing</strong> in the StreamKit control bar, or click the "Stop sharing" button in your browser's built-in screen share notification bar at the bottom of the screen. Both methods immediately stop the screen share for all participants.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 10 — WATCHING LIVE STREAMS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s10">
+      <h2><span class="sec-num">10</span> Watching Live Streams</h2>
+      <p>StreamKit delivers live video streams using HLS (HTTP Live Streaming) with adaptive bitrate, meaning the video quality automatically adjusts to your internet connection speed.</p>
+
+      <h3>Browsing Live Streams</h3>
+      <p>Click the <strong>Live</strong> icon in the left sidebar. The stream browser shows all currently active public streams as cards — each displaying the stream title, host name, viewer count, and a thumbnail. Streams are sorted by viewer count by default.</p>
+
+      <div class="screenshot-placeholder">
+        <span class="sp-icon">🖼️</span>
+        [ Screenshot: Live streams browser showing stream cards with thumbnails, viewer counts, and host avatars ]
+      </div>
+
+      <h3>Joining a Stream as a Viewer</h3>
+      <p>Click any stream card to open the stream player. The video begins loading immediately — no account login is required to watch public streams if your admin has enabled anonymous viewing. The stream plays in your browser with no plugin required.</p>
+
+      <h3>Live Chat During a Stream</h3>
+      <p>While watching, a live chat panel is displayed alongside the video player. Type your message and press <kbd>Enter</kbd> to participate in the stream conversation. The host and other viewers can see your messages in real time. You can @mention the host or other viewers in the stream chat.</p>
+
+      <h3>Viewer Count</h3>
+      <p>A live viewer count is displayed at the top of the stream player and updates every 10 seconds. The host can also see this count from their streaming dashboard.</p>
+
+      <h3>Adaptive Bitrate Playback</h3>
+      <p>StreamKit's HLS player automatically selects the best video quality (resolution and bitrate) for your current network speed. You can also manually select a quality level using the gear icon in the player controls: Auto, 1080p, 720p, 480p, or 360p.</p>
+
+      <h3>DVR / Rewind</h3>
+      <p>If the stream host has enabled DVR mode, a timeline scrubber appears in the player. You can pause, rewind up to 60 minutes into the past, and resume watching from any point. The "LIVE" badge turns gray when you are watching a delayed portion of the stream — click it to jump back to the live edge.</p>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p>Streams are available directly via HLS at the URL shown in the stream info panel (click the info icon in the player). You can use this URL in VLC, QuickTime, or any HLS-compatible media player for playback outside the browser.</p>
+      </div>
+
+      <h3>Reporting Inappropriate Content</h3>
+      <p>If a stream violates community guidelines, click the <strong>flag icon</strong> (or three-dot menu) in the stream player and select <strong>Report Stream</strong>. Select a reason (inappropriate content, spam, harassment, copyright violation) and submit. Reports are reviewed by administrators typically within 24 hours. Reported streams may be paused pending review.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 11 — GOING LIVE AS A HOST
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s11">
+      <h2><span class="sec-num">11</span> Going Live as a Host</h2>
+      <p>StreamKit accepts RTMP (Real-Time Messaging Protocol) streams from any compatible encoder. OBS Studio (free and open-source) is the recommended tool for most hosts.</p>
+
+      <h3>Requirements</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="fi-icon">📡</div>
+          <div class="fi-text">
+            <div class="fi-name">RTMP Encoder</div>
+            <div class="fi-desc">OBS Studio (recommended), Streamlabs OBS, or any RTMP-compatible software/hardware encoder</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">🌐</div>
+          <div class="fi-text">
+            <div class="fi-name">Stable Upload Speed</div>
+            <div class="fi-desc">Minimum 3 Mbps upload for 720p30; 6 Mbps for 1080p30. Use a wired connection when possible.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="fi-icon">👤</div>
+          <div class="fi-text">
+            <div class="fi-name">Host Account</div>
+            <div class="fi-desc">Your StreamKit account must have streaming permissions enabled by an administrator</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Going Live — Step by Step</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">In StreamKit, click the <strong>Live</strong> icon in the sidebar, then click <strong>Create Stream</strong>. Fill in the stream title, description, and visibility settings.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Copy your unique <strong>RTMP Ingest URL</strong> and <strong>Stream Key</strong> from the stream dashboard. Keep these private.</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">Open <strong>OBS Studio</strong>. Go to <strong>Settings &rarr; Stream</strong>. Set Service to "Custom…", paste the RTMP URL as "Server", and paste the Stream Key.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">Configure your scenes and sources in OBS (camera, capture card, game capture, etc.), then click <strong>Start Streaming</strong> in OBS.</div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-text">Return to StreamKit and click <strong>Go Live</strong> in your stream dashboard. Your stream will become visible to viewers within a few seconds.</div>
+        </li>
+      </ol>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <p><strong>Never share your stream key publicly</strong> — treat it exactly like a password. Anyone with your stream key can broadcast to your channel. If you believe your key has been compromised, click <strong>Regenerate Stream Key</strong> in your stream settings immediately.</p>
+      </div>
+
+      <h3>OBS Stream Settings</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">OBS Settings</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code><span class="cm"># OBS Studio → Settings → Stream</span>
+<span class="key">Service</span><span class="punc">:</span>     <span class="str">Custom...</span>
+<span class="key">Server</span><span class="punc">:</span>      <span class="url">rtmp://ingest.rajutechie-streamkit.io/live/&lt;streamKey&gt;</span>
+<span class="key">Stream Key</span><span class="punc">:</span>  <span class="str">&lt;your-stream-key-from-dashboard&gt;</span>
+
+<span class="cm"># Recommended OBS Output Settings</span>
+<span class="key">Video Bitrate</span><span class="punc">:</span>  <span class="num">4500</span> <span class="cm">Kbps (for 1080p30)</span>
+<span class="key">Audio Bitrate</span><span class="punc">:</span>  <span class="num">160</span> <span class="cm">Kbps</span>
+<span class="key">Encoder</span><span class="punc">:</span>       <span class="str">x264</span> <span class="cm">(or hardware NVENC/AMF if available)</span>
+<span class="key">Keyframe</span><span class="punc">:</span>      <span class="num">2</span> <span class="cm">seconds</span>
+
+<span class="cm"># HLS Playback URL for viewers</span>
+<span class="key">HLS URL</span><span class="punc">:</span>  <span class="url">https://stream.rajutechie-streamkit.io/hls/&lt;streamKey&gt;/index.m3u8</span></code></pre>
+      </div>
+
+      <h3>Stream Settings Reference</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Setting</th><th>Values</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>title</code></td><td>String (max 100 chars)</td><td>Stream title shown to viewers in the stream browser</td></tr>
+            <tr><td><code>description</code></td><td>String (max 500 chars)</td><td>Displayed in the stream info panel for viewers</td></tr>
+            <tr><td><code>visibility</code></td><td><code>public</code> / <code>private</code> / <code>unlisted</code></td><td>Controls who can see and access the stream</td></tr>
+            <tr><td><code>chatEnabled</code></td><td><code>true</code> / <code>false</code></td><td>Enable or disable the live chat panel for viewers</td></tr>
+            <tr><td><code>maxBitrate</code></td><td>Integer (Kbps)</td><td>Maximum ingest bitrate accepted by the server. Excess bitrate is rejected.</td></tr>
+            <tr><td><code>recordStream</code></td><td><code>true</code> / <code>false</code></td><td>If enabled, the stream is recorded and available for later replay. Requires admin to enable recordings.</td></tr>
+            <tr><td><code>dvr</code></td><td><code>true</code> / <code>false</code></td><td>Enables the DVR / rewind feature for viewers. Requires additional server storage.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Ending Your Stream</h3>
+      <p>Click <strong>Stop Streaming</strong> in OBS first (this stops the RTMP feed), then click <strong>End Stream</strong> in the StreamKit dashboard. This updates the stream status, archives the recording (if enabled), and notifies viewers that the stream has ended.</p>
+
+      <h3>Viewing Your Stream Stats</h3>
+      <p>While live, your stream dashboard displays real-time statistics: current viewer count, peak viewer count since going live, stream uptime, ingest bitrate, and dropped frame rate. These stats update every 5 seconds.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 12 — PROFILE & PRESENCE STATUS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s12">
+      <h2><span class="sec-num">12</span> Profile &amp; Presence Status</h2>
+      <p>Your profile is how other StreamKit users identify you. Your presence status helps teammates know when you're available to chat or take a call.</p>
+
+      <h3>Editing Your Profile</h3>
+      <p>Click your avatar in the top-right corner of the app (or the <strong>Profile</strong> icon in the sidebar), then click <strong>Edit Profile</strong>. You can update your display name and profile picture at any time. Changes take effect immediately across all channels and conversations.</p>
+
+      <div class="screenshot-placeholder">
+        <span class="sp-icon">🖼️</span>
+        [ Screenshot: Profile edit modal showing displayName field, avatar upload area, and custom status input ]
+      </div>
+
+      <h3>Presence Statuses</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Status</th><th>Indicator</th><th>Meaning</th><th>Auto-Set Trigger</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Online</strong></td>
+              <td><span class="status-dot online"></span> Green</td>
+              <td>Actively using StreamKit — ready to receive calls and messages</td>
+              <td>On login and when the tab regains focus</td>
+            </tr>
+            <tr>
+              <td><strong>Away</strong></td>
+              <td><span class="status-dot away"></span> Yellow</td>
+              <td>Logged in but inactive — may not respond immediately</td>
+              <td>Automatically after 5 minutes of inactivity (no mouse/keyboard activity)</td>
+            </tr>
+            <tr>
+              <td><strong>Do Not Disturb</strong></td>
+              <td><span class="status-dot dnd"></span> Red</td>
+              <td>Online but suppressing all notification sounds and call ringtones</td>
+              <td>Must be set manually by the user</td>
+            </tr>
+            <tr>
+              <td><strong>Offline</strong></td>
+              <td><span class="status-dot offline"></span> Gray</td>
+              <td>Not connected to StreamKit</td>
+              <td>On logout or when the browser tab is closed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Setting a Custom Status Message</h3>
+      <p>In addition to the four standard presence statuses, you can set a short custom status message (up to 60 characters) that appears next to your name. For example: "In a meeting until 3pm" or "On vacation this week". Click your avatar, then click the status field beneath your name to type a custom message.</p>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p>Set <strong>Do Not Disturb</strong> during presentations or focused work sessions to suppress all notification sounds and prevent incoming call ringtones from interrupting you. You'll still receive messages; they just won't make noise.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 13 — NOTIFICATIONS & ALERTS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s13">
+      <h2><span class="sec-num">13</span> Notifications &amp; Alerts</h2>
+      <p>StreamKit keeps you informed with push notifications, in-app alerts, and optional email notifications — all configurable to your preferences.</p>
+
+      <h3>Notification Types</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Notification Type</th><th>Push (Browser)</th><th>In-App Banner</th><th>Email</th><th>Where to Configure</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Incoming Call</td><td>Yes</td><td>Yes</td><td>No</td><td>Settings &rarr; Notifications &rarr; Calls</td></tr>
+            <tr><td>New Message (@mention)</td><td>Yes</td><td>Yes</td><td>Optional</td><td>Settings &rarr; Notifications &rarr; Messages</td></tr>
+            <tr><td>New Message (all messages)</td><td>Optional</td><td>Yes</td><td>No</td><td>Settings &rarr; Notifications &rarr; Messages</td></tr>
+            <tr><td>Meeting Reminder</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Settings &rarr; Notifications &rarr; Meetings</td></tr>
+            <tr><td>Stream Started (followed host)</td><td>Optional</td><td>Yes</td><td>No</td><td>Settings &rarr; Notifications &rarr; Streams</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Setting Up Browser Push Notifications</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">Go to <strong>Settings &rarr; Notifications</strong> in StreamKit.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Click <strong>Enable Browser Notifications</strong>. Your browser will display a permission prompt at the top of the page.</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">Click <strong>Allow</strong> in the browser prompt. StreamKit will confirm that notifications are now active.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">If you accidentally clicked <strong>Block</strong>, you'll need to go to your browser's site permissions settings and manually re-enable notifications for the StreamKit URL.</div>
+        </li>
+      </ol>
+
+      <h3>Quiet Hours</h3>
+      <p>Configure a time window during which all non-critical notification sounds are suppressed. Go to <strong>Settings &rarr; Notifications &rarr; Quiet Hours</strong>, set your start and end times, and enable the toggle. Incoming call notifications will still ring during Quiet Hours unless you also enable Do Not Disturb.</p>
+
+      <h3>Mobile Push Notifications</h3>
+      <p>On iOS (15+) and Android (9+), the StreamKit mobile web app registers a push notification token with your device when you first enable notifications. This token allows the server to send push alerts directly to your device even when the StreamKit tab is closed. Your push token is automatically refreshed every 30 days.</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <p>Email notifications are sent to the email address registered to your account. You can change your notification email (if different from your login email) in <strong>Settings &rarr; Account &rarr; Notification Email</strong>.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 14 — PRIVACY & SECURITY
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s14">
+      <h2><span class="sec-num">14</span> Privacy &amp; Security</h2>
+      <p>Understanding how your data is handled — and how to protect yourself — is important. This section covers visibility controls, blocking, reporting, data retention, and token security.</p>
+
+      <h3>Who Can See Your Presence Status</h3>
+      <p>By default, your presence status (Online, Away, etc.) is visible to all users who share at least one channel with you, or who are in your contacts list. You can restrict status visibility to <strong>Contacts only</strong> or <strong>Nobody</strong> in <strong>Settings &rarr; Privacy &rarr; Presence Visibility</strong>.</p>
+
+      <h3>Blocking a User</h3>
+      <p>Blocking a user prevents them from: sending you direct messages, seeing your presence status, @mentioning you, and initiating calls with you. To block someone, open their profile card (click their avatar) and select <strong>Block User</strong>. You can manage your block list in <strong>Settings &rarr; Privacy &rarr; Blocked Users</strong>.</p>
+
+      <h3>Reporting a Message or User</h3>
+      <p>To report a message, hover over it, click the three-dot menu, and select <strong>Report Message</strong>. To report a user, open their profile and click <strong>Report User</strong>. Choose a reason (harassment, spam, inappropriate content, etc.) and optionally add a note. Reports are sent to administrators and moderators for review.</p>
+
+      <h3>Data Retention</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Data Type</th><th>Default Retention</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Chat Messages</td><td>Indefinite</td><td>Your admin may configure a retention policy. Check with your admin for your org's policy.</td></tr>
+            <tr><td>Call Logs</td><td>90 days</td><td>Includes duration, participants, and timestamps. Does not include call recordings unless enabled.</td></tr>
+            <tr><td>Stream Recordings</td><td>30 days (if enabled)</td><td>Recordings are automatically deleted after 30 days unless the host downloads them first.</td></tr>
+            <tr><td>Uploaded Files</td><td>Indefinite</td><td>Files shared in channels are stored until the channel is deleted or the admin purges old files.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Token Security</h3>
+      <p>Your authentication token is like a password for your StreamKit session. Never share it with anyone, including people claiming to be administrators. Tokens expire after 24 hours by default (your admin may configure a longer or shorter duration). If you believe your token has been compromised, log out immediately, then log back in to obtain a new token.</p>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <p>StreamKit does <strong>not end-to-end encrypt messages by default</strong>. Messages are encrypted in transit (TLS) and at rest, but administrators with server access can access message content. If your organization requires end-to-end encryption, contact your admin about available encryption options and compliance configurations.</p>
+      </div>
+
+      <h3>Administrator-Level Controls</h3>
+      <p>Platform administrators have access to additional moderation tools: banning users permanently, setting content rules (blocked words/phrases), auditing user activity logs, and configuring data retention policies. If you have concerns about how the platform is being managed, contact your organization's StreamKit administrator directly.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 15 — TROUBLESHOOTING
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s15">
+      <h2><span class="sec-num">15</span> Troubleshooting</h2>
+      <p>Most issues with StreamKit can be resolved quickly. Find your problem in the list below, or expand the FAQ items for detailed solutions.</p>
+
+      <h3>Common Issues Quick Reference</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Problem</th><th>Likely Cause</th><th>Quick Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Camera / microphone not working</td><td>Browser permissions not granted</td><td>Click the lock icon in your browser's address bar and grant camera/mic access, then refresh the page</td></tr>
+            <tr><td>Can't join a meeting</td><td>Meeting has ended or wrong meeting ID</td><td>Double-check the invite link or ask the host for the correct meeting ID</td></tr>
+            <tr><td>Stream buffering / lag</td><td>Slow network or congested server</td><td>Lower the quality manually in the player, or check your internet upload speed</td></tr>
+            <tr><td>No push notifications</td><td>Browser notifications are blocked</td><td>Go to browser site settings, find StreamKit's URL, and change Notifications from "Blocked" to "Allow"</td></tr>
+            <tr><td>Call drops immediately</td><td>DTLS / ICE negotiation failure</td><td>Check if a corporate firewall is blocking UDP ports. Contact your admin about STUN/TURN server config.</td></tr>
+            <tr><td>Can't see other participants</td><td>WebRTC blocked by network firewall</td><td>Contact your admin — a TURN server may need to be configured for your network</td></tr>
+            <tr><td>Login fails</td><td>Expired or invalid auth token</td><td>Log out completely, clear browser cookies for the site, and request a new token from your admin</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Detailed FAQ</h3>
+      <div class="faq-list">
+
+        <div class="faq-item" id="faq1">
+          <div class="faq-question" onclick="toggleFaq('faq1')">
+            <span><span class="fq-icon">📷</span> &nbsp; My camera shows a black screen or shows the wrong camera</span>
+            <span class="fq-chevron">&#9660;</span>
+          </div>
+          <div class="faq-answer">
+            <p>This usually happens when another application has exclusive access to your camera, or when the browser is using a different camera than expected.</p>
+            <p><strong>Steps to fix:</strong></p>
+            <ul style="margin:8px 0 0 18px;line-height:2">
+              <li>Close any other app that might be using your camera (Zoom, Teams, FaceTime, etc.)</li>
+              <li>Click the camera icon in the call controls to disable and re-enable your video</li>
+              <li>In browser site permissions, check which camera device is selected for StreamKit</li>
+              <li>If you have multiple cameras, go to <strong>Settings &rarr; Audio &amp; Video</strong> and select the correct camera device</li>
+              <li>Try refreshing the page and rejoining the call</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="faq2">
+          <div class="faq-question" onclick="toggleFaq('faq2')">
+            <span><span class="fq-icon">🔇</span> &nbsp; Other participants can't hear me / I can't hear others</span>
+            <span class="fq-chevron">&#9660;</span>
+          </div>
+          <div class="faq-answer">
+            <p>Audio issues can be caused by permissions, wrong input/output devices, or mute states.</p>
+            <p><strong>Check these things in order:</strong></p>
+            <ul style="margin:8px 0 0 18px;line-height:2">
+              <li>Verify you are not muted — the microphone icon in the control bar should not have a slash through it. Press <kbd>M</kbd> to toggle.</li>
+              <li>Check that your correct microphone and speakers are selected in <strong>Settings &rarr; Audio &amp; Video</strong></li>
+              <li>Verify browser microphone permission is granted (lock icon in address bar)</li>
+              <li>Check your system's audio input and output device settings</li>
+              <li>Try using headphones to rule out echo/feedback issues</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="faq3">
+          <div class="faq-question" onclick="toggleFaq('faq3')">
+            <span><span class="fq-icon">📶</span> &nbsp; My stream is lagging or disconnecting from OBS</span>
+            <span class="fq-chevron">&#9660;</span>
+          </div>
+          <div class="faq-answer">
+            <p>Stream instability from OBS is almost always a network issue or a bitrate too high for your upload speed.</p>
+            <p><strong>Steps to stabilize your stream:</strong></p>
+            <ul style="margin:8px 0 0 18px;line-height:2">
+              <li>Run a speed test and confirm you have at least twice your target bitrate in upload speed (e.g., if streaming at 4500 Kbps, you need 9 Mbps+ upload)</li>
+              <li>Switch to a wired Ethernet connection instead of Wi-Fi</li>
+              <li>In OBS, reduce the Video Bitrate to 3000 Kbps or lower and try again</li>
+              <li>Enable <strong>Dynamic Bitrate</strong> in OBS (Settings &rarr; Advanced &rarr; Network) to automatically adjust bitrate when connection drops</li>
+              <li>Check OBS's "Dropped Frames" and "Network" stats in the bottom status bar during streaming</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="faq4">
+          <div class="faq-question" onclick="toggleFaq('faq4')">
+            <span><span class="fq-icon">🌐</span> &nbsp; I get "ICE failed" or call drops immediately on connect</span>
+            <span class="fq-chevron">&#9660;</span>
+          </div>
+          <div class="faq-answer">
+            <p>ICE (Interactive Connectivity Establishment) failures happen when WebRTC cannot establish a peer-to-peer or relay connection between participants. This is almost always a network or firewall issue.</p>
+            <p><strong>Common causes and fixes:</strong></p>
+            <ul style="margin:8px 0 0 18px;line-height:2">
+              <li>Your corporate network or VPN may be blocking UDP traffic on ports 10000-60000. Contact your IT/admin team.</li>
+              <li>The StreamKit server may not have a TURN relay server configured. Ask your admin to check the TURN server configuration.</li>
+              <li>Try disabling your VPN temporarily to see if that resolves the issue.</li>
+              <li>If on a restrictive network, ask your admin to configure TURN over TCP port 443 (TLS), which bypasses most firewalls.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="faq5">
+          <div class="faq-question" onclick="toggleFaq('faq5')">
+            <span><span class="fq-icon">🔑</span> &nbsp; My login keeps failing / I'm getting "token expired" errors</span>
+            <span class="fq-chevron">&#9660;</span>
+          </div>
+          <div class="faq-answer">
+            <p>Auth tokens expire after a set period (default: 24 hours). If you're seeing token expiry errors repeatedly, follow these steps:</p>
+            <ul style="margin:8px 0 0 18px;line-height:2">
+              <li>Click <strong>Log Out</strong> from the user menu (top-right corner)</li>
+              <li>Clear your browser's cookies and site data for the StreamKit domain</li>
+              <li>Log in again with your credentials</li>
+              <li>If the problem persists, ask your administrator to verify your account status — your account may have been suspended or your role may have changed</li>
+              <li>If your admin provides a pre-generated token, paste it directly on the login screen instead of using a password</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <h3>How to Report a Bug</h3>
+      <p>If you encounter an error that isn't listed above, gather information from your browser's developer console and share it with your administrator.</p>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p>Press <kbd>F12</kbd> to open your browser's Developer Tools, then click the <strong>Console</strong> tab. Look for error messages prefixed with <code>[SignalingServer]</code>, <code>[mediasoup]</code>, <code>[WebRTC]</code>, or <code>[StreamKit]</code>. Copy the relevant lines and include them when reporting the bug to your admin. This information significantly speeds up diagnosis.</p>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 16 — KEYBOARD SHORTCUTS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="section" id="s16">
+      <h2><span class="sec-num">16</span> Keyboard Shortcuts</h2>
+      <p>StreamKit supports a comprehensive set of keyboard shortcuts to speed up your workflow. Shortcuts are active when the relevant view is focused.</p>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <p>Keyboard shortcuts for calls and meetings only work when the <strong>call or meeting window is focused</strong> (click inside the call area if shortcuts aren't responding). Chat shortcuts work when the message composer is not focused — click outside the input field first.</p>
+      </div>
+
+      <h3>Global Shortcuts</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Windows / Linux</th><th>Mac</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mute / Unmute microphone</td><td><kbd>M</kbd></td><td><kbd>M</kbd></td></tr>
+            <tr><td>Camera on / off</td><td><kbd>V</kbd></td><td><kbd>V</kbd></td></tr>
+            <tr><td>Hang up / Close modal</td><td><kbd>Esc</kbd></td><td><kbd>Esc</kbd></td></tr>
+            <tr><td>Toggle full screen</td><td><kbd>F</kbd></td><td><kbd>F</kbd></td></tr>
+            <tr><td>Share / stop sharing screen</td><td><kbd>S</kbd></td><td><kbd>S</kbd></td></tr>
+            <tr><td>Toggle sidebar</td><td><kbd>Ctrl</kbd>+<kbd>\</kbd></td><td><kbd>Cmd</kbd>+<kbd>\</kbd></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Chat Shortcuts</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Windows / Linux</th><th>Mac</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Send message</td><td><kbd>Enter</kbd></td><td><kbd>Return</kbd></td></tr>
+            <tr><td>New line in composer</td><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td><kbd>Shift</kbd>+<kbd>Return</kbd></td></tr>
+            <tr><td>Search messages / channels</td><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td><kbd>Cmd</kbd>+<kbd>K</kbd></td></tr>
+            <tr><td>React to focused message</td><td><kbd>R</kbd></td><td><kbd>R</kbd></td></tr>
+            <tr><td>Edit your last message</td><td><kbd>E</kbd></td><td><kbd>E</kbd></td></tr>
+            <tr><td>Upload file / attachment</td><td><kbd>Ctrl</kbd>+<kbd>U</kbd></td><td><kbd>Cmd</kbd>+<kbd>U</kbd></td></tr>
+            <tr><td>Jump to unread messages</td><td><kbd>Alt</kbd>+<kbd>Down</kbd></td><td><kbd>Option</kbd>+<kbd>Down</kbd></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Calls &amp; Meetings Shortcuts</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Windows / Linux</th><th>Mac</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Push-to-talk (hold to unmute)</td><td><kbd>Space</kbd> (hold)</td><td><kbd>Space</kbd> (hold)</td></tr>
+            <tr><td>Raise / lower hand</td><td><kbd>H</kbd></td><td><kbd>H</kbd></td></tr>
+            <tr><td>Toggle participant list</td><td><kbd>P</kbd></td><td><kbd>P</kbd></td></tr>
+            <tr><td>Toggle in-call chat</td><td><kbd>C</kbd></td><td><kbd>C</kbd></td></tr>
+            <tr><td>Toggle speaker / gallery view</td><td><kbd>Alt</kbd>+<kbd>V</kbd></td><td><kbd>Option</kbd>+<kbd>V</kbd></td></tr>
+            <tr><td>Picture-in-picture mode</td><td><kbd>Alt</kbd>+<kbd>P</kbd></td><td><kbd>Option</kbd>+<kbd>P</kbd></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Streaming Shortcuts (Host)</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Windows / Linux</th><th>Mac</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Toggle stream chat panel</td><td><kbd>C</kbd></td><td><kbd>C</kbd></td></tr>
+            <tr><td>Mute / unmute stream audio monitor</td><td><kbd>Alt</kbd>+<kbd>M</kbd></td><td><kbd>Option</kbd>+<kbd>M</kbd></td></tr>
+            <tr><td>Open stream settings</td><td><kbd>Ctrl</kbd>+<kbd>,</kbd></td><td><kbd>Cmd</kbd>+<kbd>,</kbd></td></tr>
+            <tr><td>Copy stream link to clipboard</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd></td><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </article>
+</div>
+
+<script>
+/* ── IntersectionObserver for active nav link ── */
+(function(){
+  var links = document.querySelectorAll('.nav-link');
+  var sections = Array.from(document.querySelectorAll('.section'));
+  if(!sections.length) return;
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        var id = e.target.id;
+        links.forEach(function(l){
+          l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  },{rootMargin:'-20% 0px -70% 0px'});
+
+  sections.forEach(function(s){ observer.observe(s); });
+})();
+
+/* ── Nav search filter ── */
+function filterNav(query){
+  var q = query.toLowerCase().trim();
+  var labels = document.querySelectorAll('.nav-section-label');
+  var links = document.querySelectorAll('.nav-link');
+
+  links.forEach(function(l){
+    var text = l.textContent.toLowerCase();
+    var show = !q || text.includes(q);
+    l.style.display = show ? '' : 'none';
+  });
+
+  labels.forEach(function(label){
+    var next = label.nextElementSibling;
+    var hasVisible = false;
+    while(next && !next.classList.contains('nav-section-label')){
+      if(next.style.display !== 'none') hasVisible = true;
+      next = next.nextElementSibling;
+    }
+    label.style.display = (!q || hasVisible) ? '' : 'none';
+  });
+}
+
+/* ── Copy buttons ── */
+function copyCode(btn){
+  var pre = btn.closest('.code-wrap').querySelector('pre');
+  var text = pre ? pre.innerText : '';
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function(){
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(function(){
+    btn.textContent = 'Error';
+    setTimeout(function(){ btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+/* ── Mobile hamburger toggle ── */
+document.getElementById('menu-toggle').addEventListener('click', function(){
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+/* Close sidebar when clicking a nav link on mobile */
+document.querySelectorAll('.nav-link').forEach(function(link){
+  link.addEventListener('click', function(){
+    if(window.innerWidth <= 680){
+      document.getElementById('sidebar').classList.remove('open');
+    }
+  });
+});
+
+/* ── FAQ collapsible items ── */
+function toggleFaq(id){
+  var item = document.getElementById(id);
+  if(!item) return;
+  item.classList.toggle('open');
+}
+</script>
+</body>
+</html>

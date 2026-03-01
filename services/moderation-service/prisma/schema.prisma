@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Report {
+  id         String   @id @default(uuid())
+  reporterId String
+  targetType String   // user | message | channel
+  targetId   String
+  reason     String
+  status     String   @default("pending") // pending | reviewed | resolved | dismissed
+  source     String   @default("manual")  // manual | auto
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Ban {
+  id        String    @id @default(uuid())
+  userId    String
+  channelId String?
+  reason    String
+  bannedBy  String    @default("system")
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+}
+
+model ModerationRule {
+  id        String   @id @default(uuid())
+  type      String   // word | regex | url
+  pattern   String
+  action    String   // flag | block | delete
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

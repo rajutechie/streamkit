@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Call {
+  id              String   @id @default(uuid())
+  type            String   // audio | video
+  status          String   @default("ringing") // ringing | active | ended | missed
+  channelId       String?
+  initiatedBy     String
+  metadata        Json     @default("{}")
+  recordingStatus String   @default("none") // none | recording | processing | completed
+  startedAt       DateTime @default(now())
+  answeredAt      DateTime?
+  endedAt         DateTime?
+  endReason       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  participants CallParticipant[]
+}
+
+model CallParticipant {
+  id        String   @id @default(uuid())
+  callId    String
+  userId    String
+  status    String   @default("ringing") // ringing | connected | on_hold | left
+  role      String   // caller | callee
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  updatedAt DateTime @updatedAt
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+}

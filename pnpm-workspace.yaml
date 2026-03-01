@@ -1,0 +1,4 @@
+packages:
+  - "packages/*"
+  - "packages/backend-adapters/express"
+  - "services/*"

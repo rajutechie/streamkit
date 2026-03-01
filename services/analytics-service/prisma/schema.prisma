@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UsageRecord {
+  id        String   @id @default(uuid())
+  appId     String
+  metric    String   // api_calls | video_minutes | storage_bytes | mau
+  value     Float
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([appId, metric, createdAt])
+}
+
+model MauEntry {
+  id        String   @id @default(uuid())
+  appId     String
+  userId    String
+  month     String   // YYYY-MM
+  createdAt DateTime @default(now())
+
+  @@unique([appId, userId, month])
+}
+
+model AppPlan {
+  appId     String   @id
+  planId    String   @default("free")
+  updatedAt DateTime @updatedAt
+}

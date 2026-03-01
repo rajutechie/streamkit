@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rajutechie StreamKit — Developer Wiki (GitHub Dark)</title>
+<style>
+/* ── Reset & base ── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html { scroll-behavior:smooth }
+
+:root {
+  --sidebar-bg: #161b22;
+  --sidebar-text: #e6edf3;
+  --sidebar-hover: #58a6ff;
+  --content-bg: #0d1117;
+  --content-text: #e6edf3;
+  --accent: #58a6ff;
+  --code-bg: #161b22;
+  --code-text: #e6edf3;
+  --border: #30363d;
+  --heading: #79c0ff;
+  --muted: #8b949e;
+  --tag-bg: #1c2336;
+  --tag-text: #79c0ff;
+  --sidebar-w: 280px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--content-bg);
+  color: var(--content-text);
+  display: flex;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  position: fixed; top:0; left:0; height:100vh;
+  overflow-y: auto; z-index:100;
+  display: flex; flex-direction: column;
+  border-right: 1px solid #30363d;
+}
+#sidebar::-webkit-scrollbar { width:4px }
+#sidebar::-webkit-scrollbar-track { background: var(--sidebar-bg) }
+#sidebar::-webkit-scrollbar-thumb { background: #30363d; border-radius:2px }
+
+.sidebar-logo {
+  padding: 20px 20px 18px;
+  border-bottom: 1px solid #30363d;
+  display: flex; align-items: center; gap:10px; flex-shrink:0;
+}
+.sidebar-logo .logo-icon {
+  width:34px; height:34px;
+  background: #1f6feb;
+  border-radius: 6px;
+  display: flex; align-items:center; justify-content:center;
+  font-size:17px; font-weight:900; color:#fff; flex-shrink:0;
+  border: 1px solid #388bfd40;
+}
+.sidebar-logo .logo-text { line-height:1.2 }
+.sidebar-logo .logo-name { font-size:14px; font-weight:700; color:#e6edf3 }
+.sidebar-logo .logo-sub  { font-size:11px; color:#8b949e }
+
+.sidebar-search { padding:10px 14px; border-bottom:1px solid #30363d; flex-shrink:0 }
+.sidebar-search input {
+  width:100%; background:#0d1117;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  padding: 6px 10px;
+  border-radius: 6px; font-size:13px; outline:none;
+}
+.sidebar-search input::placeholder { color: #6e7681 }
+.sidebar-search input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,.1) }
+
+nav { padding: 6px 0; flex:1 }
+.nav-section-label {
+  font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  color: #6e7681; padding: 14px 16px 4px;
+}
+nav a {
+  display:flex; align-items:center; gap:8px; padding:6px 16px;
+  font-size:13px; color:#8b949e; text-decoration:none;
+  transition: all .12s; border-left: 3px solid transparent;
+  border-radius: 0;
+}
+nav a:hover { color:#e6edf3; background: rgba(88,166,255,.08); border-left-color: #58a6ff }
+nav a.active { color:#58a6ff; background: rgba(88,166,255,.12); border-left-color:#58a6ff; font-weight:600 }
+nav a .nav-num {
+  font-size:10px; background:#21262d; color:#6e7681;
+  border-radius:4px; padding:1px 5px; min-width:20px;
+  text-align:center; flex-shrink:0; font-family:monospace;
+}
+
+.sidebar-footer {
+  padding:12px 16px; border-top:1px solid #30363d; flex-shrink:0;
+  font-size:11px; color:#6e7681;
+}
+.sidebar-footer a { color:#58a6ff; text-decoration:none }
+
+/* ── Main content ── */
+#main { margin-left: var(--sidebar-w); flex:1; min-width:0 }
+
+.top-bar {
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  padding: 0 40px; height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:50;
+}
+.top-bar-left { font-size:13px; color:#8b949e }
+.top-bar-left span { color:#58a6ff; font-weight:600 }
+.top-bar-right { display:flex; gap:8px }
+
+.badge {
+  font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600;
+  background:#21262d; color:#8b949e; border:1px solid #30363d;
+}
+.badge.green { background:#1b3a27; color:#3fb950; border-color:#2ea04326 }
+.badge.blue  { background:#1a2f5e; color:#79c0ff; border-color:#1f6feb26 }
+
+article { padding:40px 48px 80px; max-width:900px }
+
+/* ── Headings ── */
+.section { padding-top:16px }
+.section+.section { border-top:1px solid #21262d; margin-top:8px; padding-top:40px }
+
+h1 { font-size:28px; font-weight:800; color:#e6edf3; margin-bottom:6px }
+h1 .accent { color:#58a6ff }
+.hero-sub { font-size:15px; color:#8b949e; margin-bottom:32px }
+
+h2 {
+  font-size:20px; font-weight:700; color:#79c0ff; margin-bottom:12px;
+  display:flex; align-items:center; gap:10px;
+  padding-bottom:8px; border-bottom:1px solid #21262d;
+}
+h2 .sec-num {
+  font-size:11px; background:#1c2336; color:#58a6ff;
+  border-radius:20px; padding:2px 9px; font-weight:700; flex-shrink:0;
+  border:1px solid #1f6feb30;
+}
+h3 { font-size:15px; font-weight:600; color:#cdd9e5; margin:20px 0 8px }
+p  { margin-bottom:14px; color:#b1bac4; font-size:14px; line-height:1.75 }
+
+/* ── Method tags / chips ── */
+.tag { display:inline-block; font-size:11px; font-weight:700; border-radius:4px; padding:2px 7px; margin:2px; font-family:monospace; }
+.tag.get    { background:#1b3a27; color:#3fb950; border:1px solid #2ea04330 }
+.tag.post   { background:#1a2f5e; color:#79c0ff; border:1px solid #388bfd30 }
+.tag.patch  { background:#3d2b00; color:#ffa657; border:1px solid #d2933030 }
+.tag.delete { background:#3d0000; color:#ff7b72; border:1px solid #f8514930 }
+.tag.ws     { background:#2d1f6e; color:#d2a8ff; border:1px solid #8957e530 }
+
+/* ── Endpoint list ── */
+.endpoint-list { list-style:none; margin-bottom:18px }
+.endpoint-list li {
+  display:flex; align-items:baseline; gap:10px; padding:7px 0;
+  border-bottom:1px solid #21262d; font-size:13px;
+}
+.endpoint-list li:last-child { border-bottom:none }
+.endpoint-list .ep-path { font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace; color:#c9d1d9; font-size:12.5px }
+.endpoint-list .ep-desc { color:#8b949e; font-size:12px; margin-left:auto }
+
+/* ── Code blocks ── */
+.code-wrap { position:relative; margin:16px 0 20px; border-radius:8px; overflow:hidden; border:1px solid #30363d }
+.code-header {
+  background:#21262d; padding:8px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid #30363d;
+}
+.code-lang { font-size:11px; font-weight:600; color:#8b949e; text-transform:uppercase; letter-spacing:.06em }
+.copy-btn {
+  font-size:11px; font-weight:600; color:#8b949e; background:#30363d;
+  border:1px solid #484f58; border-radius:6px; padding:3px 10px; cursor:pointer; transition:all .15s;
+}
+.copy-btn:hover { background:#484f58; color:#e6edf3 }
+.copy-btn.copied { background:#1b3a27; color:#3fb950; border-color:#2ea04340 }
+
+pre { background:#161b22; margin:0; }
+pre code {
+  display:block; padding:16px 20px;
+  font-size:12.5px; line-height:1.85;
+  font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  color:#e6edf3;
+}
+
+/* GitHub dark syntax colors */
+pre code .cm  { color:#8b949e; font-style:italic }
+pre code .kw  { color:#ff7b72 }
+pre code .str { color:#a5d6ff }
+pre code .num { color:#79c0ff }
+pre code .fn  { color:#d2a8ff }
+pre code .key { color:#ffa657 }
+pre code .punc{ color:#8b949e }
+pre code .url { color:#3fb950; text-decoration:underline }
+
+/* ── Callout boxes ── */
+.callout {
+  border-radius:6px; padding:12px 16px; margin:16px 0;
+  font-size:13px; display:flex; gap:10px; align-items:flex-start;
+  border:1px solid;
+}
+.callout.info {
+  background:rgba(31,111,235,.1); border-color:#1f6feb40;
+  border-left:4px solid #1f6feb;
+}
+.callout.warn {
+  background:rgba(210,153,34,.1); border-color:#9e6a0340;
+  border-left:4px solid #9e6a03;
+}
+.callout.tip {
+  background:rgba(63,185,80,.1); border-color:#2ea04340;
+  border-left:4px solid #3fb950;
+}
+.callout .ci { font-size:16px; flex-shrink:0; margin-top:1px }
+.callout p { margin:0; color:#c9d1d9 }
+
+/* ── Tables ── */
+.tbl-wrap { overflow-x:auto; margin:16px 0; border:1px solid #30363d; border-radius:6px }
+table { width:100%; border-collapse:collapse; font-size:13px }
+th {
+  background:#161b22; text-align:left; padding:9px 14px;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  color:#8b949e; border-bottom:1px solid #30363d;
+}
+td { padding:9px 14px; border-bottom:1px solid #21262d; vertical-align:top; color:#b1bac4 }
+tr:last-child td { border-bottom:none }
+tr:hover td { background:#161b22 }
+td code, th code {
+  font-family:'SFMono-Regular',Consolas,monospace; font-size:11.5px;
+  background:#21262d; padding:2px 6px; border-radius:4px; color:#79c0ff;
+  border:1px solid #30363d;
+}
+.required { color:#ff7b72; font-size:10px; font-weight:700; text-transform:uppercase }
+
+/* ── Service / feature cards ── */
+.service-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin:16px 0 }
+.service-card {
+  background:#161b22; border:1px solid #30363d; border-radius:8px;
+  padding:14px 16px; transition:border-color .15s;
+}
+.service-card:hover { border-color:#58a6ff }
+.service-card .svc-name { font-size:13px; font-weight:700; color:#e6edf3; margin-bottom:4px }
+.service-card .svc-port { font-size:11px; color:#58a6ff; font-family:monospace; font-weight:600 }
+.service-card .svc-desc { font-size:11px; color:#8b949e; margin-top:4px }
+
+.feature-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px; margin:16px 0 }
+.feature-item {
+  display:flex; align-items:flex-start; gap:10px;
+  background:#161b22; border:1px solid #30363d; border-radius:8px; padding:12px 14px;
+  transition:border-color .15s;
+}
+.feature-item:hover { border-color:#58a6ff }
+.feature-item .fi-icon {
+  width:32px; height:32px; border-radius:6px;
+  background:#1c2336; display:flex; align-items:center;
+  justify-content:center; font-size:16px; flex-shrink:0;
+}
+.feature-item .fi-text .fi-name { font-size:13px; font-weight:600; color:#e6edf3 }
+.feature-item .fi-text .fi-desc { font-size:11px; color:#8b949e }
+
+/* ── Inline code (outside code blocks) ── */
+:not(pre) > code {
+  font-family:'SFMono-Regular',Consolas,monospace; font-size:85%;
+  background:#161b22; color:#ff7b72;
+  padding:2px 6px; border-radius:4px;
+  border:1px solid #30363d;
+}
+
+/* ── Responsive ── */
+@media(max-width:900px) { :root{--sidebar-w:240px} article{padding:28px 24px 60px} .top-bar{padding:0 24px} }
+@media(max-width:680px) {
+  #sidebar{transform:translateX(-100%);transition:transform .25s}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  .top-bar{padding:0 16px}
+  article{padding:20px 16px 60px}
+  #menu-toggle{display:flex}
+}
+#menu-toggle {
+  display:none; background:none; border:none; cursor:pointer;
+  flex-direction:column; gap:4px; padding:4px;
+}
+#menu-toggle span { display:block; width:20px; height:2px; background:#8b949e; border-radius:1px }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">S</div>
+    <div class="logo-text">
+      <div class="logo-name">StreamKit</div>
+      <div class="logo-sub">by Rajutechie</div>
+    </div>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="nav-search" placeholder="Search sections..." oninput="filterNav(this.value)">
+  </div>
+  <nav id="nav-list">
+    <div class="nav-section-label">Getting Started</div>
+    <a href="#overview" class="nav-link"><span class="nav-num">01</span> Overview</a>
+    <a href="#quickstart" class="nav-link"><span class="nav-num">02</span> Quick Start</a>
+    <a href="#auth" class="nav-link"><span class="nav-num">03</span> Authentication</a>
+    <div class="nav-section-label">SDKs</div>
+    <a href="#angular" class="nav-link"><span class="nav-num">04</span> Angular SDK</a>
+    <a href="#react" class="nav-link"><span class="nav-num">18</span> React SDK</a>
+    <a href="#reactnative" class="nav-link"><span class="nav-num">19</span> React Native SDK</a>
+    <a href="#jssdk" class="nav-link"><span class="nav-num">20</span> JavaScript SDK</a>
+    <a href="#serversdk" class="nav-link"><span class="nav-num">21</span> Server SDK</a>
+    <a href="#expressadapter" class="nav-link"><span class="nav-num">22</span> Express Adapter</a>
+    <a href="#examples" class="nav-link"><span class="nav-num">23</span> Example Projects</a>
+    <div class="nav-section-label">Core APIs</div>
+    <a href="#chat" class="nav-link"><span class="nav-num">05</span> Chat API</a>
+    <a href="#websocket" class="nav-link"><span class="nav-num">06</span> WebSocket Events</a>
+    <a href="#calls" class="nav-link"><span class="nav-num">07</span> Video Calls</a>
+    <a href="#meetings" class="nav-link"><span class="nav-num">08</span> Meetings</a>
+    <a href="#streaming" class="nav-link"><span class="nav-num">09</span> Live Streaming</a>
+    <a href="#presence" class="nav-link"><span class="nav-num">10</span> Presence</a>
+    <a href="#notifications" class="nav-link"><span class="nav-num">11</span> Push Notifications</a>
+    <div class="nav-section-label">Management</div>
+    <a href="#users" class="nav-link"><span class="nav-num">12</span> User Management</a>
+    <a href="#moderation" class="nav-link"><span class="nav-num">13</span> Content Moderation</a>
+    <a href="#analytics" class="nav-link"><span class="nav-num">14</span> Analytics</a>
+    <a href="#media" class="nav-link"><span class="nav-num">15</span> Media Upload</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="#envvars" class="nav-link"><span class="nav-num">16</span> Environment Variables</a>
+    <a href="#selfhosting" class="nav-link"><span class="nav-num">17</span> Self-Hosting Guide</a>
+  </nav>
+  <div class="sidebar-footer">
+    API Gateway: <code style="color:#6366f1;font-size:11px">localhost:3000</code><br>
+    Version: <strong style="color:#f1f5f9">1.0.0</strong> &nbsp;|&nbsp; Updated: Feb 2026
+  </div>
+</aside>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<div id="main">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button id="menu-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      &nbsp;<span>Rajutechie StreamKit</span> — Developer Integration Wiki
+    </div>
+    <div class="top-bar-right">
+      <span class="badge green">v1.0.0</span>
+      <span class="badge blue">Self-Hosted</span>
+    </div>
+  </div>
+
+  <article>
+
+    <!-- ───────────── HERO ───────────── -->
+    <h1><span class="accent">StreamKit</span> Developer Wiki</h1>
+    <p class="hero-sub">Complete integration reference for Rajutechie StreamKit — a self-hosted real-time communication platform. API Gateway: <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#4338ca;font-size:12px">http://localhost:3000</code></p>
+
+    <!-- ═══════════════ 1. OVERVIEW ═══════════════ -->
+    <section class="section" id="overview">
+      <h2><span class="sec-num">01</span> Overview</h2>
+      <p>StreamKit provides a complete real-time communication stack that you deploy and control. Every feature runs on your infrastructure — no third-party data sharing required.</p>
+
+      <div class="feature-list">
+        <div class="feature-item"><div class="fi-icon">💬</div><div class="fi-text"><div class="fi-name">Chat</div><div class="fi-desc">Channels, threads, reactions, read receipts</div></div></div>
+        <div class="feature-item"><div class="fi-icon">📹</div><div class="fi-text"><div class="fi-name">Video Calls</div><div class="fi-desc">1:1 and group calls with recording</div></div></div>
+        <div class="feature-item"><div class="fi-icon">🗓</div><div class="fi-text"><div class="fi-name">Meetings</div><div class="fi-desc">Scheduled meetings, polls, hand-raise</div></div></div>
+        <div class="feature-item"><div class="fi-icon">📡</div><div class="fi-text"><div class="fi-name">Live Streaming</div><div class="fi-desc">HLS + RTMP broadcast with moderation</div></div></div>
+        <div class="feature-item"><div class="fi-icon">🟢</div><div class="fi-text"><div class="fi-name">Presence</div><div class="fi-desc">Real-time online/away/DND status</div></div></div>
+        <div class="feature-item"><div class="fi-icon">🔔</div><div class="fi-text"><div class="fi-name">Notifications</div><div class="fi-desc">Push, email, and in-app notifications</div></div></div>
+      </div>
+
+      <h3>Architecture</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">ascii</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                             │
+│        Angular SDK  │  React SDK  │  REST / WebSocket           │
+└──────────────┬──────────────────────────────┬───────────────────┘
+               │ HTTP/REST                    │ Socket.IO
+               ▼                              ▼
+┌──────────────────────────┐   ┌─────────────────────────────────┐
+│   API GATEWAY :3000      │   │  WebSocket Gateway  :3001       │
+│  (Auth · Rate Limit · Routing)│  (Socket.IO · Real-time Events) │
+└──────────────────────────┘   └─────────────────────────────────┘
+         │                                    │
+         ▼                                    ▼
+┌────────────────────────────────────────────────────────────────┐
+│                       MICROSERVICES                            │
+│  Auth:3010  Chat:3002  Calls:3003  Meetings:3004  Stream:3005  │
+│  Presence:3006  Notifications:3007  Users:3008  Media:3009     │
+│  Moderation:3011  Analytics:3012                               │
+└─────────────────────────────┬──────────────────────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              ▼                ▼                ▼
+         PostgreSQL          Redis            Kafka
+         (Persistent)     (Cache/Sessions) (Event Bus)
+</code></pre>
+      </div>
+
+      <h3>Microservices &amp; Ports</h3>
+      <div class="service-grid">
+        <div class="service-card"><div class="svc-name">API Gateway</div><div class="svc-port">:3000</div><div class="svc-desc">All REST traffic entry point</div></div>
+        <div class="service-card"><div class="svc-name">WebSocket Gateway</div><div class="svc-port">:3001</div><div class="svc-desc">Socket.IO real-time events</div></div>
+        <div class="service-card"><div class="svc-name">Auth Service</div><div class="svc-port">:3010</div><div class="svc-desc">JWT issuance &amp; validation</div></div>
+        <div class="service-card"><div class="svc-name">Chat Service</div><div class="svc-port">:3002</div><div class="svc-desc">Channels &amp; messages</div></div>
+        <div class="service-card"><div class="svc-name">Call Service</div><div class="svc-port">:3003</div><div class="svc-desc">Audio / video calls</div></div>
+        <div class="service-card"><div class="svc-name">Meeting Service</div><div class="svc-port">:3004</div><div class="svc-desc">Scheduled meetings</div></div>
+        <div class="service-card"><div class="svc-name">Stream Service</div><div class="svc-port">:3005</div><div class="svc-desc">HLS / RTMP live streams</div></div>
+        <div class="service-card"><div class="svc-name">Presence Service</div><div class="svc-port">:3006</div><div class="svc-desc">Online status tracking</div></div>
+        <div class="service-card"><div class="svc-name">Notifications</div><div class="svc-port">:3007</div><div class="svc-desc">Push / email / in-app</div></div>
+        <div class="service-card"><div class="svc-name">User Service</div><div class="svc-port">:3008</div><div class="svc-desc">User profiles &amp; devices</div></div>
+        <div class="service-card"><div class="svc-name">Media Service</div><div class="svc-port">:3009</div><div class="svc-desc">File upload &amp; storage</div></div>
+        <div class="service-card"><div class="svc-name">Moderation</div><div class="svc-port">:3011</div><div class="svc-desc">Reports, bans &amp; rules</div></div>
+        <div class="service-card"><div class="svc-name">Analytics</div><div class="svc-port">:3012</div><div class="svc-desc">Usage metrics &amp; summaries</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 2. QUICK START ═══════════════ -->
+    <section class="section" id="quickstart">
+      <h2><span class="sec-num">02</span> Quick Start</h2>
+      <p>Get StreamKit running locally in under five minutes.</p>
+      <div class="callout info"><span class="ci">ℹ</span><p>Prerequisites: Node.js 20+, pnpm 8+, Docker Desktop</p></div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm"># 1 — Clone the repository</span>
+git clone https://github.com/rajutechie/streamkit.git
+cd streamkit
+
+<span class="cm"># 2 — Install all workspace dependencies</span>
+pnpm install
+
+<span class="cm"># 3 — Start infrastructure (Postgres, Redis, Kafka)</span>
+docker compose up -d
+
+<span class="cm"># 4 — Copy environment template and configure</span>
+cp .env.example .env
+<span class="cm"># Edit .env — set DB_PASSWORD, REDIS_URL, JWT_SECRET, etc.</span>
+
+<span class="cm"># 5 — Run database migrations</span>
+pnpm db:migrate
+
+<span class="cm"># 6 — Start all services in development mode</span>
+pnpm dev
+
+<span class="cm"># Services will be available at:</span>
+<span class="cm">#   API Gateway  → http://localhost:3000</span>
+<span class="cm">#   WebSocket    → http://localhost:3001</span>
+<span class="cm">#   Auth service → http://localhost:3010</span></code></pre>
+      </div>
+      <div class="callout tip"><span class="ci">✓</span><p>Run <code>curl http://localhost:3000/health</code> to verify the gateway is up. You should receive <code>{"status":"ok"}</code>.</p></div>
+    </section>
+
+    <!-- ═══════════════ 3. AUTHENTICATION ═══════════════ -->
+    <section class="section" id="auth">
+      <h2><span class="sec-num">03</span> Authentication</h2>
+      <p>StreamKit uses JWT bearer tokens. Issue a token with your API credentials, then include it in every subsequent request as <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+
+      <h3>Issue a Token</h3>
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/auth/token</span><span class="ep-desc">Exchange API key+secret for a JWT</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/auth/refresh</span><span class="ep-desc">Refresh an expiring token</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/auth/revoke</span><span class="ep-desc">Revoke / invalidate a token</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Issue a JWT token</span>
+<span class="kw">const</span> response = <span class="kw">await</span> fetch(<span class="str">'http://localhost:3000/auth/token'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+  body: JSON.stringify({
+    apiKey:    <span class="str">'sk_dev_rajutechie-streamkit_001'</span>,
+    apiSecret: <span class="str">'dev_secret_001_change_me_in_production'</span>,
+    userId:    <span class="str">'user_123'</span>,
+    role:      <span class="str">'user'</span>,        <span class="cm">// 'user' | 'admin' | 'moderator'</span>
+  }),
+});
+<span class="kw">const</span> { token, refreshToken, expiresIn } = <span class="kw">await</span> response.json();
+
+<span class="cm">// Refresh before expiry</span>
+<span class="kw">const</span> refreshed = <span class="kw">await</span> fetch(<span class="str">'http://localhost:3000/auth/refresh'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+  body: JSON.stringify({ refreshToken }),
+}).then(r => r.json());
+
+<span class="cm">// Revoke a token</span>
+<span class="kw">await</span> fetch(<span class="str">'http://localhost:3000/auth/revoke'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: {
+    Authorization: <span class="str">`Bearer <span class="key">${token}</span>`</span>,
+    <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+  },
+  body: JSON.stringify({ token }),
+});</code></pre>
+      </div>
+
+      <div class="callout warn"><span class="ci">⚠</span><p>Never expose your <code>apiSecret</code> in client-side code. Issue tokens from your backend server and pass only the <code>token</code> to the client.</p></div>
+
+      <h3>Token Response Shape</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>token</code></td><td>string</td><td>JWT bearer token (use in Authorization header)</td></tr>
+          <tr><td><code>refreshToken</code></td><td>string</td><td>Long-lived token used to obtain new access tokens</td></tr>
+          <tr><td><code>expiresIn</code></td><td>number</td><td>Seconds until the access token expires (default 3600)</td></tr>
+          <tr><td><code>userId</code></td><td>string</td><td>The user ID embedded in the token</td></tr>
+          <tr><td><code>role</code></td><td>string</td><td>Role granted: <code>user</code>, <code>admin</code>, or <code>moderator</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 4. ANGULAR SDK ═══════════════ -->
+    <section class="section" id="angular">
+      <h2><span class="sec-num">04</span> Angular SDK Integration</h2>
+      <p>The official Angular SDK wraps all StreamKit APIs into injectable Angular services with RxJS Observables.</p>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>npm install @rajutechie-streamkit/angular-sdk</code></pre>
+      </div>
+
+      <h3>Module Setup</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript — app.module.ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { NgModule } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { RajutechieStreamKitModule } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/angular-sdk'</span>;
+
+<span class="fn">@NgModule</span>({
+  imports: [
+    RajutechieStreamKitModule.<span class="fn">forRoot</span>({
+      apiKey:  <span class="str">'sk_dev_rajutechie-streamkit_001'</span>,
+      apiUrl:  <span class="str">'http://localhost:3000'</span>,
+      wsUrl:   <span class="str">'http://localhost:3001'</span>,
+    }),
+  ],
+})
+<span class="kw">export class</span> <span class="fn">AppModule</span> {}</code></pre>
+      </div>
+
+      <h3>Chat Service</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript — chat.component.ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { RajutechieStreamKitChatService } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/angular-sdk'</span>;
+
+<span class="fn">@Component</span>({ <span class="cm">/* ... */</span> })
+<span class="kw">export class</span> <span class="fn">ChatComponent</span> {
+  messages: <span class="kw">any</span>[] = [];
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> chatService: <span class="fn">RajutechieStreamKitChatService</span>) {}
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="cm">// Subscribe to real-time message stream</span>
+    <span class="kw">this</span>.chatService
+      .<span class="fn">messageStream</span>(<span class="str">'channel_abc'</span>)
+      .<span class="fn">subscribe</span>(msg => <span class="kw">this</span>.messages.<span class="fn">push</span>(msg));
+  }
+
+  <span class="fn">sendMessage</span>() {
+    <span class="kw">this</span>.chatService
+      .<span class="fn">sendMessage</span>(<span class="str">'channel_abc'</span>, { text: <span class="str">'Hello!'</span> })
+      .<span class="fn">subscribe</span>();
+  }
+}</code></pre>
+      </div>
+
+      <h3>Available Services</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Service</th><th>Key Methods</th></tr>
+          <tr><td><code>RajutechieStreamKitChatService</code></td><td><code>messageStream(channelId)</code>, <code>sendMessage()</code>, <code>createChannel()</code>, <code>addReaction()</code></td></tr>
+          <tr><td><code>RajutechieStreamKitCallService</code></td><td><code>startCall()</code>, <code>acceptCall()</code>, <code>rejectCall()</code>, <code>endCall()</code>, <code>incomingCalls$</code></td></tr>
+          <tr><td><code>RajutechieStreamKitMeetingService</code></td><td><code>scheduleMeeting()</code>, <code>joinMeeting()</code>, <code>participants$()</code>, <code>raiseHand()</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 5. CHAT API ═══════════════ -->
+    <section class="section" id="chat">
+      <h2><span class="sec-num">05</span> Chat API</h2>
+      <p>Full-featured messaging with channels, threads, reactions, read receipts, and cursor-based pagination.</p>
+
+      <h3>Channel Endpoints</h3>
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/channels</span><span class="ep-desc">Create a new channel</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/channels?type=public</span><span class="ep-desc">List channels (filter by type)</span></li>
+      </ul>
+
+      <h3>Message Endpoints</h3>
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/channels/:id/messages</span><span class="ep-desc">Send a message</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/channels/:id/messages?limit=25&amp;after=cursor</span><span class="ep-desc">List messages (cursor pagination)</span></li>
+        <li><span class="tag patch">PATCH</span><span class="ep-path">/channels/:id/messages/:mid</span><span class="ep-desc">Edit a message</span></li>
+        <li><span class="tag delete">DELETE</span><span class="ep-path">/channels/:id/messages/:mid</span><span class="ep-desc">Delete a message</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/channels/:id/messages/:mid/reactions</span><span class="ep-desc">Add a reaction</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/channels/:id/messages/:mid/read</span><span class="ep-desc">Mark message as read</span></li>
+      </ul>
+
+      <h3>Member Management</h3>
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/channels/:id/members/:uid</span><span class="ep-desc">Add member to channel</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/channels/:id/members</span><span class="ep-desc">List channel members</span></li>
+        <li><span class="tag patch">PATCH</span><span class="ep-path">/channels/:id/members/:uid</span><span class="ep-desc">Update member role</span></li>
+        <li><span class="tag delete">DELETE</span><span class="ep-path">/channels/:id/members/:uid</span><span class="ep-desc">Remove member</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">const</span> API = <span class="str">'http://localhost:3000'</span>;
+<span class="kw">const</span> authHeaders = {
+  Authorization: <span class="str">`Bearer <span class="key">${token}</span>`</span>,
+  <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+};
+
+<span class="cm">// Create a channel</span>
+<span class="kw">const</span> channel = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/channels`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({ name: <span class="str">'general'</span>, type: <span class="str">'public'</span> }),
+}).then(r => r.json());
+
+<span class="cm">// Send a message with mentions</span>
+<span class="kw">const</span> msg = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/channels/<span class="key">${channelId}</span>/messages`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    text:     <span class="str">'Hello World!'</span>,
+    mentions: [<span class="str">'user_456'</span>],
+  }),
+}).then(r => r.json());
+
+<span class="cm">// Paginate messages (cursor-based)</span>
+<span class="kw">const</span> { messages, nextCursor } = <span class="kw">await</span> fetch(
+  <span class="str">`<span class="key">${API}</span>/channels/<span class="key">${channelId}</span>/messages?limit=25&after=<span class="key">${cursor}</span>`</span>,
+  { headers: authHeaders }
+).then(r => r.json());
+
+<span class="cm">// Add a reaction</span>
+<span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/channels/<span class="key">${channelId}</span>/messages/<span class="key">${msgId}</span>/reactions`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({ emoji: <span class="str">'👍'</span> }),
+});</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 6. WEBSOCKET ═══════════════ -->
+    <section class="section" id="websocket">
+      <h2><span class="sec-num">06</span> WebSocket Real-time Events</h2>
+      <p>StreamKit uses Socket.IO on port <code>3001</code>. Authenticate on connect, then join channels to receive targeted events.</p>
+
+      <h3>Message Events</h3>
+      <ul class="endpoint-list">
+        <li><span class="tag ws">EVENT</span><span class="ep-path">message.new</span><span class="ep-desc">New message in a joined channel</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">message.updated</span><span class="ep-desc">Message was edited</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">message.deleted</span><span class="ep-desc">Message was deleted</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">typing.start</span><span class="ep-desc">User started typing</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">typing.stop</span><span class="ep-desc">User stopped typing</span></li>
+      </ul>
+
+      <h3>Call &amp; Presence Events</h3>
+      <ul class="endpoint-list">
+        <li><span class="tag ws">EVENT</span><span class="ep-path">call.incoming</span><span class="ep-desc">Incoming call notification</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">call.accepted</span><span class="ep-desc">Remote participant accepted</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">call.rejected</span><span class="ep-desc">Remote participant rejected</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">call.ended</span><span class="ep-desc">Call was terminated</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">presence.update</span><span class="ep-desc">A user's presence status changed</span></li>
+        <li><span class="tag ws">EVENT</span><span class="ep-path">presence.get</span><span class="ep-desc">Request current presence state</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { io } <span class="kw">from</span> <span class="str">'socket.io-client'</span>;
+
+<span class="kw">const</span> socket = <span class="fn">io</span>(<span class="str">'http://localhost:3001'</span>, {
+  auth: { token },  <span class="cm">// JWT from /auth/token</span>
+});
+
+<span class="cm">// Join a channel room</span>
+socket.<span class="fn">on</span>(<span class="str">'connect'</span>, () => {
+  socket.<span class="fn">emit</span>(<span class="str">'channel:join'</span>, { channelId: <span class="str">'channel_abc'</span> });
+});
+
+<span class="cm">// Handle new messages</span>
+socket.<span class="fn">on</span>(<span class="str">'message.new'</span>, (msg) => {
+  console.<span class="fn">log</span>(<span class="str">'New message:'</span>, msg);
+  <span class="fn">appendMessageToUI</span>(msg);
+});
+
+<span class="cm">// Typing indicators</span>
+socket.<span class="fn">on</span>(<span class="str">'typing.start'</span>, ({ userId, channelId }) => {
+  <span class="fn">showTypingIndicator</span>(userId);
+});
+socket.<span class="fn">on</span>(<span class="str">'typing.stop'</span>, ({ userId }) => {
+  <span class="fn">hideTypingIndicator</span>(userId);
+});
+
+<span class="cm">// Emit typing events</span>
+inputEl.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, () => {
+  socket.<span class="fn">emit</span>(<span class="str">'typing:start'</span>, { channelId: <span class="str">'channel_abc'</span> });
+  <span class="fn">clearTimeout</span>(typingTimer);
+  typingTimer = <span class="fn">setTimeout</span>(() =>
+    socket.<span class="fn">emit</span>(<span class="str">'typing:stop'</span>, { channelId: <span class="str">'channel_abc'</span> }), <span class="num">1500</span>);
+});
+
+<span class="cm">// Presence updates</span>
+socket.<span class="fn">on</span>(<span class="str">'presence.update'</span>, ({ userId, status }) => {
+  <span class="fn">updatePresenceUI</span>(userId, status);
+});</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 7. VIDEO CALLS ═══════════════ -->
+    <section class="section" id="calls">
+      <h2><span class="sec-num">07</span> Video Calls</h2>
+      <p>Initiate audio or video calls between users. Calls support recording, live stats, and WebRTC-based peer connections managed by the server.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/calls</span><span class="ep-desc">Initiate a call (type: audio|video)</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/calls/:id/accept</span><span class="ep-desc">Accept an incoming call</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/calls/:id/reject</span><span class="ep-desc">Reject an incoming call</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/calls/:id/end</span><span class="ep-desc">End an active call</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/calls/:id/recording/start</span><span class="ep-desc">Start call recording</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/calls/:id/recording/stop</span><span class="ep-desc">Stop call recording</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/calls/:id/stats</span><span class="ep-desc">Get call quality stats</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript — REST</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Start a video call</span>
+<span class="kw">const</span> call = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/calls`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    type:         <span class="str">'video'</span>,
+    participants: [<span class="str">'user_456'</span>, <span class="str">'user_789'</span>],
+  }),
+}).then(r => r.json());
+
+console.log(<span class="str">'Call ID:'</span>, call.id);  <span class="cm">// use in further operations</span>
+
+<span class="cm">// Accept via socket event then REST</span>
+socket.<span class="fn">on</span>(<span class="str">'call.incoming'</span>, async (call) => {
+  <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/calls/<span class="key">${call.id}</span>/accept`</span>, {
+    method: <span class="str">'POST'</span>, headers: authHeaders,
+  });
+});</code></pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript — Angular SDK</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Start a call</span>
+<span class="kw">this</span>.callService
+  .<span class="fn">startCall</span>({ type: <span class="str">'video'</span>, participants: [<span class="str">'user_456'</span>] })
+  .<span class="fn">subscribe</span>(call => console.log(<span class="str">'Call started:'</span>, call.id));
+
+<span class="cm">// Handle incoming calls</span>
+<span class="kw">this</span>.callService.incomingCalls$.<span class="fn">subscribe</span>(call => {
+  <span class="kw">if</span> (<span class="fn">confirm</span>(<span class="str">`Incoming call from <span class="key">${call.initiatedBy}</span>?`</span>)) {
+    <span class="kw">this</span>.callService.<span class="fn">acceptCall</span>(call.id).<span class="fn">subscribe</span>();
+  } <span class="kw">else</span> {
+    <span class="kw">this</span>.callService.<span class="fn">rejectCall</span>(call.id).<span class="fn">subscribe</span>();
+  }
+});</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 8. MEETINGS ═══════════════ -->
+    <section class="section" id="meetings">
+      <h2><span class="sec-num">08</span> Meetings</h2>
+      <p>Schedule and manage multi-participant meetings with moderation controls, hand-raise, and polls.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings</span><span class="ep-desc">Schedule a new meeting</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/meetings/:id</span><span class="ep-desc">Get meeting details</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/join</span><span class="ep-desc">Join a meeting</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/leave</span><span class="ep-desc">Leave a meeting</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/end</span><span class="ep-desc">End the meeting (host only)</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/participants/:uid/mute</span><span class="ep-desc">Mute a participant</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/hand/raise</span><span class="ep-desc">Raise hand</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/hand/lower</span><span class="ep-desc">Lower hand</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/meetings/:id/polls</span><span class="ep-desc">Create a poll</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript — Angular SDK</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Schedule a meeting</span>
+<span class="kw">this</span>.meetingService.<span class="fn">scheduleMeeting</span>({
+  title:       <span class="str">'Team Sync'</span>,
+  scheduledAt: <span class="kw">new</span> <span class="fn">Date</span>(<span class="str">'2026-03-01T10:00:00Z'</span>).toISOString(),
+  duration:    <span class="num">60</span>,           <span class="cm">// minutes</span>
+}).<span class="fn">subscribe</span>(meeting => {
+  console.log(<span class="str">'Meeting ID:'</span>, meeting.id);
+});
+
+<span class="cm">// Live participants stream</span>
+<span class="kw">this</span>.meetingService
+  .<span class="fn">participants$</span>(<span class="str">'meeting_abc'</span>)
+  .<span class="fn">subscribe</span>(participants => {
+    <span class="kw">this</span>.participantList = participants;
+  });
+
+<span class="cm">// Raise hand</span>
+<span class="kw">this</span>.meetingService.<span class="fn">raiseHand</span>(<span class="str">'meeting_abc'</span>).<span class="fn">subscribe</span>();
+
+<span class="cm">// Create a poll</span>
+<span class="kw">this</span>.meetingService.<span class="fn">createPoll</span>(<span class="str">'meeting_abc'</span>, {
+  question: <span class="str">'Should we extend the sprint?'</span>,
+  options:  [<span class="str">'Yes'</span>, <span class="str">'No'</span>, <span class="str">'Need more info'</span>],
+  duration: <span class="num">120</span>,  <span class="cm">// seconds</span>
+}).<span class="fn">subscribe</span>();</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 9. LIVE STREAMING ═══════════════ -->
+    <section class="section" id="streaming">
+      <h2><span class="sec-num">09</span> Live Streaming</h2>
+      <p>Create and broadcast live streams using HLS for playback and RTMP for ingestion (OBS, FFmpeg, etc.).</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/streams</span><span class="ep-desc">Create a stream session</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/streams/:id/start</span><span class="ep-desc">Go live — returns HLS + RTMP URLs</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/streams/:id/stop</span><span class="ep-desc">End the stream</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/streams/:id/viewers</span><span class="ep-desc">Get live viewer count</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/streams/:id/moderate</span><span class="ep-desc">Ban viewer or disable chat</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Step 1 — Create stream</span>
+<span class="kw">const</span> { data: stream } = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/streams`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    title:      <span class="str">'My Live Stream'</span>,
+    hostUserId: <span class="str">'user_123'</span>,
+    visibility: <span class="str">'public'</span>,
+    settings: {
+      chatEnabled: <span class="kw">true</span>,
+      lowLatency:  <span class="kw">true</span>,
+    },
+  }),
+}).then(r => r.json());
+
+<span class="cm">// Step 2 — Go live (returns broadcast URLs)</span>
+<span class="kw">const</span> { data: live } = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/streams/<span class="key">${stream.id}</span>/start`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+}).then(r => r.json());
+
+console.log(<span class="str">'HLS playback:'</span>, live.hlsUrl);
+<span class="cm">// → https://cdn.example.com/hls/stream_abc/index.m3u8</span>
+console.log(<span class="str">'RTMP ingest:'</span>, live.rtmpUrl);
+<span class="cm">// → rtmp://your-server/live/stream_abc?key=secret</span>
+
+<span class="cm">// Use live.rtmpUrl as the stream server in OBS / FFmpeg</span>
+<span class="cm">// Use live.hlsUrl in video.js / hls.js for playback</span>
+
+<span class="cm">// Viewer count</span>
+<span class="kw">const</span> { count } = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/streams/<span class="key">${stream.id}</span>/viewers`</span>,
+  { headers: authHeaders }
+).then(r => r.json());</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 10. PRESENCE ═══════════════ -->
+    <section class="section" id="presence">
+      <h2><span class="sec-num">10</span> Presence</h2>
+      <p>Track and publish user presence states. Updates are broadcast in real-time via WebSocket to subscribed clients.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/presence/update</span><span class="ep-desc">Set current user's presence status</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/presence/:userId</span><span class="ep-desc">Get a single user's presence</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/presence/bulk?userIds=id1,id2</span><span class="ep-desc">Bulk presence lookup</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Set presence to online</span>
+<span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/presence/update`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    userId: <span class="str">'user_123'</span>,
+    appId:  <span class="str">'my-app'</span>,
+    status: <span class="str">'online'</span>,   <span class="cm">// 'online' | 'away' | 'dnd' | 'offline'</span>
+    device: <span class="str">'web'</span>,
+  }),
+});
+
+<span class="cm">// Get presence for a single user</span>
+<span class="kw">const</span> presence = <span class="kw">await</span> fetch(
+  <span class="str">`<span class="key">${API}</span>/presence/user_123`</span>,
+  { headers: authHeaders }
+).then(r => r.json());
+<span class="cm">// → { userId: 'user_123', status: 'online', lastSeen: '2026-02-28T10:00:00Z' }</span>
+
+<span class="cm">// Bulk lookup</span>
+<span class="kw">const</span> presences = <span class="kw">await</span> fetch(
+  <span class="str">`<span class="key">${API}</span>/presence/bulk?userIds=user_123,user_456,user_789`</span>,
+  { headers: authHeaders }
+).then(r => r.json());
+<span class="cm">// → [{ userId, status, lastSeen }, ...]</span></code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 11. PUSH NOTIFICATIONS ═══════════════ -->
+    <section class="section" id="notifications">
+      <h2><span class="sec-num">11</span> Push Notifications</h2>
+      <p>Send push, email, or in-app notifications. Manage per-user preferences to honour quiet hours and channel mutes.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/notifications/send</span><span class="ep-desc">Send a notification (push|email|in_app)</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/notifications/preferences/:userId</span><span class="ep-desc">Get notification preferences</span></li>
+        <li><span class="tag patch">PATCH</span><span class="ep-path">/notifications/preferences/:userId</span><span class="ep-desc">Update preferences</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Send a push notification</span>
+<span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/notifications/send`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    userId: <span class="str">'user_456'</span>,
+    type:   <span class="str">'push'</span>,          <span class="cm">// 'push' | 'email' | 'in_app'</span>
+    title:  <span class="str">'New Message'</span>,
+    body:   <span class="str">'You have a new message from Alice'</span>,
+    data:   { channelId: <span class="str">'channel_abc'</span> },
+  }),
+});
+
+<span class="cm">// Update preferences — mute a channel</span>
+<span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/notifications/preferences/user_456`</span>, {
+  method: <span class="str">'PATCH'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    mutedChannels: [<span class="str">'channel_abc'</span>],
+    quietHours:    { start: <span class="str">'22:00'</span>, end: <span class="str">'08:00'</span>, timezone: <span class="str">'Asia/Kolkata'</span> },
+  }),
+});</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 12. USER MANAGEMENT ═══════════════ -->
+    <section class="section" id="users">
+      <h2><span class="sec-num">12</span> User Management</h2>
+      <p>Create and manage user profiles. Use <code>externalId</code> to map StreamKit users to your own identity system.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/users</span><span class="ep-desc">Create or upsert a user</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/users/:id</span><span class="ep-desc">Get user profile</span></li>
+        <li><span class="tag patch">PATCH</span><span class="ep-path">/users/:id</span><span class="ep-desc">Update user profile</span></li>
+        <li><span class="tag delete">DELETE</span><span class="ep-path">/users/:id</span><span class="ep-desc">Soft-delete a user</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/users/:id/devices</span><span class="ep-desc">Register a device for push notifications</span></li>
+      </ul>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td><code>externalId</code></td><td>string</td><td><span class="required">required</span></td><td>Your own user ID</td></tr>
+          <tr><td><code>displayName</code></td><td>string</td><td><span class="required">required</span></td><td>Name shown in UI</td></tr>
+          <tr><td><code>avatarUrl</code></td><td>string</td><td>optional</td><td>Profile picture URL</td></tr>
+          <tr><td><code>role</code></td><td>string</td><td>optional</td><td><code>user</code> | <code>admin</code> | <code>moderator</code></td></tr>
+          <tr><td><code>metadata</code></td><td>object</td><td>optional</td><td>Arbitrary key-value data</td></tr>
+        </table>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Device Field</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>platform</code></td><td>string</td><td><code>ios</code> | <code>android</code> | <code>web</code></td></tr>
+          <tr><td><code>pushToken</code></td><td>string</td><td>FCM / APNs / Web Push token</td></tr>
+          <tr><td><code>pushProvider</code></td><td>string</td><td><code>fcm</code> | <code>apns</code> | <code>webpush</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 13. MODERATION ═══════════════ -->
+    <section class="section" id="moderation">
+      <h2><span class="sec-num">13</span> Content Moderation</h2>
+      <p>Manage reports, bans, and automated content filtering rules. Rules support word matching, regex, and URL pattern blocking.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/moderation/report</span><span class="ep-desc">Submit a content report</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/moderation/reports?status=pending&amp;page=1</span><span class="ep-desc">List reports</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/moderation/ban</span><span class="ep-desc">Ban a user</span></li>
+        <li><span class="tag delete">DELETE</span><span class="ep-path">/moderation/ban/:id</span><span class="ep-desc">Remove a ban</span></li>
+        <li><span class="tag post">POST</span><span class="ep-path">/moderation/rules</span><span class="ep-desc">Create an automated rule</span></li>
+      </ul>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Rule Type</th><th>Action</th><th>Example</th></tr>
+          <tr><td><code>word</code></td><td><code>flag</code> | <code>block</code> | <code>delete</code></td><td>Block specific words from messages</td></tr>
+          <tr><td><code>regex</code></td><td><code>flag</code> | <code>block</code> | <code>delete</code></td><td>Match complex patterns (e.g. phone numbers)</td></tr>
+          <tr><td><code>url</code></td><td><code>flag</code> | <code>block</code> | <code>delete</code></td><td>Block or flag specific domains</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 14. ANALYTICS ═══════════════ -->
+    <section class="section" id="analytics">
+      <h2><span class="sec-num">14</span> Analytics</h2>
+      <p>Retrieve usage metrics per app. Supports multiple metric types and aggregation periods.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag get">GET</span><span class="ep-path">/analytics/usage/:appId?metric=api_calls&amp;period=month</span><span class="ep-desc">Time-series usage data</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/analytics/usage/:appId/summary</span><span class="ep-desc">Aggregated usage summary</span></li>
+      </ul>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Metric</th><th>Description</th></tr>
+          <tr><td><code>api_calls</code></td><td>Total REST API requests</td></tr>
+          <tr><td><code>messages_sent</code></td><td>Chat messages delivered</td></tr>
+          <tr><td><code>call_minutes</code></td><td>Total audio/video call minutes</td></tr>
+          <tr><td><code>active_users</code></td><td>Unique authenticated users (DAU/MAU)</td></tr>
+          <tr><td><code>storage_bytes</code></td><td>Media storage consumed</td></tr>
+          <tr><td><code>stream_minutes</code></td><td>Live stream broadcast minutes</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 15. MEDIA UPLOAD ═══════════════ -->
+    <section class="section" id="media">
+      <h2><span class="sec-num">15</span> Media Upload</h2>
+      <p>Initiate an upload to get a pre-signed S3 URL, PUT the file directly to S3, then use the <code>mediaId</code> in messages or profiles.</p>
+
+      <ul class="endpoint-list">
+        <li><span class="tag post">POST</span><span class="ep-path">/media/upload</span><span class="ep-desc">Initiate upload — returns presigned PUT URL</span></li>
+        <li><span class="tag get">GET</span><span class="ep-path">/media/:id</span><span class="ep-desc">Get media metadata + fresh download URL</span></li>
+        <li><span class="tag delete">DELETE</span><span class="ep-path">/media/:id</span><span class="ep-desc">Delete a media object</span></li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Step 1 — Request a presigned upload URL</span>
+<span class="kw">const</span> { mediaId, uploadUrl } = <span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/media/upload`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    filename: <span class="str">'photo.jpg'</span>,
+    mimeType: <span class="str">'image/jpeg'</span>,
+    size:     <span class="num">204800</span>,   <span class="cm">// bytes</span>
+  }),
+}).then(r => r.json());
+
+<span class="cm">// Step 2 — Upload directly to S3 (no auth header needed)</span>
+<span class="kw">await</span> fetch(uploadUrl, {
+  method:  <span class="str">'PUT'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'image/jpeg'</span> },
+  body:    fileBlob,
+});
+
+<span class="cm">// Step 3 — Use mediaId in a message</span>
+<span class="kw">await</span> fetch(<span class="str">`<span class="key">${API}</span>/channels/<span class="key">${channelId}</span>/messages`</span>, {
+  method: <span class="str">'POST'</span>, headers: authHeaders,
+  body: JSON.stringify({
+    text:        <span class="str">'Check out this photo!'</span>,
+    attachments: [{ mediaId, type: <span class="str">'image'</span> }],
+  }),
+});
+
+<span class="cm">// Get a fresh download URL</span>
+<span class="kw">const</span> { downloadUrl } = <span class="kw">await</span> fetch(
+  <span class="str">`<span class="key">${API}</span>/media/<span class="key">${mediaId}</span>`</span>,
+  { headers: authHeaders }
+).then(r => r.json());</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 16. ENV VARS ═══════════════ -->
+    <section class="section" id="envvars">
+      <h2><span class="sec-num">16</span> Environment Variables Reference</h2>
+      <p>Set these variables in your <code>.env</code> file (or Docker environment). Values marked <span class="required">REQUIRED</span> must be set before starting services.</p>
+
+      <h3>API Gateway &amp; Shared</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>NODE_ENV</code></td><td><code>development</code></td><td>Runtime environment</td></tr>
+          <tr><td><code>API_PORT</code></td><td><code>3000</code></td><td>Gateway listen port</td></tr>
+          <tr><td><code>WS_PORT</code></td><td><code>3001</code></td><td>WebSocket gateway port</td></tr>
+          <tr><td><code>JWT_SECRET</code></td><td>—</td><td><span class="required">REQUIRED</span> Secret for JWT signing (min 32 chars)</td></tr>
+          <tr><td><code>JWT_EXPIRES_IN</code></td><td><code>3600</code></td><td>Access token TTL in seconds</td></tr>
+          <tr><td><code>JWT_REFRESH_EXPIRES_IN</code></td><td><code>2592000</code></td><td>Refresh token TTL (30 days)</td></tr>
+        </table>
+      </div>
+
+      <h3>Database</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>DATABASE_URL</code></td><td>—</td><td><span class="required">REQUIRED</span> PostgreSQL connection string</td></tr>
+          <tr><td><code>DB_POOL_MIN</code></td><td><code>2</code></td><td>Min connection pool size</td></tr>
+          <tr><td><code>DB_POOL_MAX</code></td><td><code>10</code></td><td>Max connection pool size</td></tr>
+        </table>
+      </div>
+
+      <h3>Redis &amp; Kafka</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>REDIS_URL</code></td><td>—</td><td><span class="required">REQUIRED</span> Redis connection URL</td></tr>
+          <tr><td><code>REDIS_PREFIX</code></td><td><code>sk:</code></td><td>Key namespace prefix</td></tr>
+          <tr><td><code>KAFKA_BROKERS</code></td><td><code>localhost:9092</code></td><td>Comma-separated broker list</td></tr>
+          <tr><td><code>KAFKA_GROUP_ID</code></td><td><code>streamkit</code></td><td>Consumer group ID</td></tr>
+        </table>
+      </div>
+
+      <h3>Storage &amp; Media</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>S3_BUCKET</code></td><td>—</td><td><span class="required">REQUIRED</span> S3 bucket name for media</td></tr>
+          <tr><td><code>S3_REGION</code></td><td><code>us-east-1</code></td><td>AWS region</td></tr>
+          <tr><td><code>AWS_ACCESS_KEY_ID</code></td><td>—</td><td>AWS credentials</td></tr>
+          <tr><td><code>AWS_SECRET_ACCESS_KEY</code></td><td>—</td><td>AWS credentials</td></tr>
+          <tr><td><code>S3_ENDPOINT</code></td><td>—</td><td>Custom endpoint for MinIO / LocalStack</td></tr>
+          <tr><td><code>UPLOAD_MAX_SIZE_MB</code></td><td><code>50</code></td><td>Max upload file size in MB</td></tr>
+        </table>
+      </div>
+
+      <h3>Notifications</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>FCM_SERVER_KEY</code></td><td>—</td><td>Firebase Cloud Messaging key (Android)</td></tr>
+          <tr><td><code>APNS_KEY_ID</code></td><td>—</td><td>Apple Push Notification key ID</td></tr>
+          <tr><td><code>APNS_TEAM_ID</code></td><td>—</td><td>Apple Developer Team ID</td></tr>
+          <tr><td><code>APNS_BUNDLE_ID</code></td><td>—</td><td>iOS app bundle ID</td></tr>
+          <tr><td><code>SMTP_HOST</code></td><td>—</td><td>SMTP server for email notifications</td></tr>
+          <tr><td><code>SMTP_PORT</code></td><td><code>587</code></td><td>SMTP port</td></tr>
+          <tr><td><code>SMTP_USER</code></td><td>—</td><td>SMTP username</td></tr>
+          <tr><td><code>SMTP_PASS</code></td><td>—</td><td>SMTP password</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 17. SELF-HOSTING ═══════════════ -->
+    <section class="section" id="selfhosting">
+      <h2><span class="sec-num">17</span> Self-Hosting Guide</h2>
+      <p>Deploy the full stack with Docker Compose. For production use Kubernetes manifests in <code>/infrastructure/k8s</code>.</p>
+
+      <h3>Docker Compose — Infrastructure</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">yaml — docker-compose.yml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>version: <span class="str">'3.9'</span>
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       streamkit
+      POSTGRES_USER:     streamkit
+      POSTGRES_PASSWORD: <span class="str">'${DB_PASSWORD}'</span>
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports: [<span class="str">'5432:5432'</span>]
+    healthcheck:
+      test: [<span class="str">'CMD-SHELL'</span>, <span class="str">'pg_isready -U streamkit'</span>]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass <span class="str">'${REDIS_PASSWORD}'</span>
+    volumes:
+      - redis_data:/data
+    ports: [<span class="str">'6379:6379'</span>]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: <span class="num">2181</span>
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on: [zookeeper]
+    ports: [<span class="str">'9092:9092'</span>]
+    environment:
+      KAFKA_BROKER_ID: <span class="num">1</span>
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: <span class="str">'true'</span>
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: <span class="num">1</span>
+
+volumes:
+  pg_data:
+  redis_data:</code></pre>
+      </div>
+
+      <h3>Nginx Reverse Proxy</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">nginx — /etc/nginx/conf.d/streamkit.conf</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>upstream api_gateway {
+    server 127.0.0.1:3000;
+}
+
+upstream ws_gateway {
+    server 127.0.0.1:3001;
+}
+
+server {
+    listen 80;
+    server_name streamkit.yourdomain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name streamkit.yourdomain.com;
+
+    ssl_certificate     /etc/letsencrypt/live/streamkit.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/streamkit.yourdomain.com/privkey.pem;
+
+    <span class="cm"># REST API</span>
+    location /api/ {
+        proxy_pass         http://api_gateway/;
+        proxy_set_header   Host             $host;
+        proxy_set_header   X-Real-IP        $remote_addr;
+        proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto https;
+        client_max_body_size 50m;
+    }
+
+    <span class="cm"># WebSocket (Socket.IO)</span>
+    location /ws/ {
+        proxy_pass         http://ws_gateway/;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade    $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+        proxy_set_header   Host       $host;
+        proxy_read_timeout 86400s;
+    }
+}</code></pre>
+      </div>
+
+      <div class="callout tip"><span class="ci">✓</span><p>For production deployments, use <code>certbot --nginx</code> to obtain free TLS certificates from Let's Encrypt, and configure <code>CORS_ORIGIN</code> in your <code>.env</code> to match your frontend domain.</p></div>
+
+      <div class="callout warn"><span class="ci">⚠</span><p>Always rotate <code>JWT_SECRET</code>, database passwords, and AWS credentials before go-live. The default <code>dev_secret_001_change_me_in_production</code> value is for local development only.</p></div>
+
+    </section>
+
+    <!-- ═══════════════ 18. REACT SDK ═══════════════ -->
+    <section class="section" id="react">
+      <h2><span class="sec-num">18</span> React SDK</h2>
+      <p>The React SDK (<code>@rajutechie-streamkit/react-sdk</code>) provides hooks and a context provider for integrating StreamKit into React and Next.js applications.</p>
+
+      <h3>Installation</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>npm install @rajutechie-streamkit/react-sdk @rajutechie-streamkit/core</code></pre>
+      </div>
+
+      <h3>Provider Setup</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">tsx — app/layout.tsx (Next.js) or App.tsx (CRA)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { RajutechieStreamKitProvider } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/react-sdk'</span>;
+
+<span class="kw">export default function</span> <span class="fn">App</span>() {
+  <span class="kw">return</span> (
+    &lt;RajutechieStreamKitProvider
+      apiKey=<span class="str">"sk_live_YOUR_KEY"</span>
+      baseUrl=<span class="str">"https://your-streamkit-domain.com"</span>
+      userId=<span class="str">"user_123"</span>
+      token=<span class="str">"&lt;jwt-from-your-server&gt;"</span>
+    &gt;
+      &lt;YourApp /&gt;
+    &lt;/RajutechieStreamKitProvider&gt;
+  );
+}</code></pre>
+      </div>
+
+      <h3>usePresence Hook</h3>
+      <p>Subscribes to real-time presence updates for a set of user IDs. Performs an initial bulk fetch then keeps the map live via WebSocket events.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">tsx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { usePresence } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/react-sdk'</span>;
+
+<span class="kw">function</span> <span class="fn">OnlineIndicator</span>({ userId }: { userId: <span class="tp">string</span> }) {
+  <span class="cm">// Pass an array of IDs — hook re-subscribes only when the set changes</span>
+  <span class="kw">const</span> presenceMap = <span class="fn">usePresence</span>([userId]);
+  <span class="kw">const</span> status = presenceMap.<span class="fn">get</span>(userId);
+
+  <span class="kw">return</span> (
+    &lt;span className={status?.status === <span class="str">'online'</span> ? <span class="str">'online'</span> : <span class="str">'offline'</span>}&gt;
+      {status?.status ?? <span class="str">'offline'</span>}
+    &lt;/span&gt;
+  );
+}</code></pre>
+      </div>
+
+      <h3>useChat Hook</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">tsx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { useChat } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/react-sdk'</span>;
+
+<span class="kw">function</span> <span class="fn">ChatPanel</span>({ channelId }: { channelId: <span class="tp">string</span> }) {
+  <span class="kw">const</span> { messages, sendMessage, loading } = <span class="fn">useChat</span>(channelId);
+
+  <span class="kw">return</span> (
+    &lt;div&gt;
+      {messages.<span class="fn">map</span>(m =&gt; &lt;p key={m.id}&gt;{m.text}&lt;/p&gt;)}
+      &lt;button onClick={() =&gt; <span class="fn">sendMessage</span>(<span class="str">'Hello!'</span>)}&gt;Send&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Hook</th><th>Returns</th><th>Description</th></tr>
+          <tr><td><code>usePresence(userIds)</code></td><td><code>Map&lt;string, PresenceStatus&gt;</code></td><td>Real-time presence for given user IDs</td></tr>
+          <tr><td><code>useChat(channelId)</code></td><td><code>{ messages, sendMessage, loading }</code></td><td>Channel message stream + sender</td></tr>
+          <tr><td><code>useCall(callId?)</code></td><td><code>{ call, accept, reject, end }</code></td><td>Active call state + controls</td></tr>
+          <tr><td><code>useStreamKitClient()</code></td><td><code>RajutechieStreamKitClient</code></td><td>Raw client access for advanced usage</td></tr>
+        </table>
+      </div>
+
+      <div class="callout tip"><span class="ci">✓</span><p>All hooks memoize subscriptions by value — passing a new array reference with the same IDs does <strong>not</strong> cause re-subscriptions. Sort-join stabilization is built in.</p></div>
+    </section>
+
+    <!-- ═══════════════ 19. REACT NATIVE SDK ═══════════════ -->
+    <section class="section" id="reactnative">
+      <h2><span class="sec-num">19</span> React Native SDK</h2>
+      <p>The React Native SDK (<code>@rajutechie-streamkit/react-native-sdk</code>) extends the JS SDK with native push notification registration for iOS (APNs) and Android (FCM).</p>
+
+      <h3>Installation</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>npm install @rajutechie-streamkit/react-native-sdk @rajutechie-streamkit/core
+<span class="cm"># Install peer deps</span>
+npm install react-native @react-native-firebase/app @react-native-firebase/messaging</code></pre>
+      </div>
+
+      <h3>Registering for Push Notifications</h3>
+      <p>Call <code>registerForPushNotifications</code> after the user is authenticated. Pass a <code>getToken</code> function from your push library — the SDK stays decoupled from any specific provider.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">tsx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { registerForPushNotifications, handleNotification, dispatchNotification }
+  <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/react-native-sdk'</span>;
+<span class="kw">import</span> messaging <span class="kw">from</span> <span class="str">'@react-native-firebase/messaging'</span>;
+
+<span class="cm">// 1. Register device — call once after login</span>
+<span class="kw">await</span> <span class="fn">registerForPushNotifications</span>(
+  <span class="str">'fcm'</span>,          <span class="cm">// 'fcm' | 'apns'</span>
+  streamKitClient, <span class="cm">// authenticated RajutechieStreamKitClient</span>
+  () =&gt; messaging().<span class="fn">getToken</span>(),
+);
+
+<span class="cm">// 2. Register a handler for incoming notifications</span>
+<span class="kw">const</span> unsub = <span class="fn">handleNotification</span>((payload) =&gt; {
+  console.<span class="fn">log</span>(<span class="str">'Notification:'</span>, payload.title, payload.body);
+  <span class="cm">// Navigate or update UI based on payload.type</span>
+});
+
+<span class="cm">// 3. Wire up your push library to dispatch to all handlers</span>
+messaging().<span class="fn">onMessage</span>(<span class="kw">async</span> (remoteMessage) =&gt; {
+  <span class="fn">dispatchNotification</span>({
+    title: remoteMessage.notification?.title,
+    body:  remoteMessage.notification?.body,
+    data:  remoteMessage.data,
+    type:  remoteMessage.data?.type <span class="kw">as</span> <span class="tp">string</span>,
+  });
+});
+
+<span class="cm">// 4. Cleanup on logout</span>
+<span class="fn">unsub</span>();
+<span class="fn">clearNotificationHandlers</span>();</code></pre>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+          <tr><td><code>registerForPushNotifications</code></td><td><code>(provider, client, getToken) → Promise&lt;string&gt;</code></td><td>Obtains a token, registers device with StreamKit backend</td></tr>
+          <tr><td><code>handleNotification</code></td><td><code>(handler) → () =&gt; void</code></td><td>Register a notification handler; returns cleanup fn</td></tr>
+          <tr><td><code>dispatchNotification</code></td><td><code>(payload) → void</code></td><td>Fan-out to all registered handlers</td></tr>
+          <tr><td><code>getRegisteredToken</code></td><td><code>() → string | null</code></td><td>Returns the last registered push token</td></tr>
+          <tr><td><code>clearNotificationHandlers</code></td><td><code>() → void</code></td><td>Remove all handlers (use on logout)</td></tr>
+        </table>
+      </div>
+
+      <div class="callout tip"><span class="ci">✓</span><p>For APNs (iOS), pass <code>'apns'</code> as the provider and use <code>messaging().getAPNSToken()</code> as the <code>getToken</code> function. StreamKit auto-detects <code>Platform.OS</code> to set the device platform field.</p></div>
+    </section>
+
+    <!-- ═══════════════ 20. JS SDK ═══════════════ -->
+    <section class="section" id="jssdk">
+      <h2><span class="sec-num">20</span> JavaScript SDK</h2>
+      <p>The JavaScript SDK (<code>@rajutechie-streamkit/js-sdk</code>) is a thin, framework-agnostic client for browsers and Node.js. It underlies the React and Angular SDKs and can be used directly in any JS/TS environment.</p>
+
+      <h3>Installation</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>npm install @rajutechie-streamkit/js-sdk @rajutechie-streamkit/core</code></pre>
+      </div>
+
+      <h3>Client Initialization</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { RajutechieStreamKitClient } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/js-sdk'</span>;
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">RajutechieStreamKitClient</span>({
+  apiKey: <span class="str">'sk_live_YOUR_KEY'</span>,
+  baseUrl: <span class="str">'https://your-streamkit-domain.com'</span>,
+});
+
+<span class="cm">// Authenticate with a server-issued JWT</span>
+<span class="kw">await</span> client.<span class="fn">connect</span>(<span class="str">'user_123'</span>, <span class="str">'&lt;jwt-token&gt;'</span>);</code></pre>
+      </div>
+
+      <h3>Chat</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Subscribe to a channel</span>
+<span class="kw">const</span> channel = client.chat.<span class="fn">channel</span>(<span class="str">'general'</span>);
+<span class="kw">await</span> channel.<span class="fn">watch</span>();
+
+<span class="cm">// Listen for new messages</span>
+channel.<span class="fn">on</span>(<span class="str">'message.new'</span>, (event) =&gt; {
+  console.<span class="fn">log</span>(event.message.text);
+});
+
+<span class="cm">// Send a message</span>
+<span class="kw">await</span> channel.<span class="fn">sendMessage</span>({ text: <span class="str">'Hello world!'</span> });
+
+<span class="cm">// Disconnect when done</span>
+client.<span class="fn">disconnect</span>();</code></pre>
+      </div>
+
+      <h3>Real-Time Events</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Listen to global events</span>
+<span class="kw">const</span> unsub = client.<span class="fn">on</span>(<span class="str">'presence.changed'</span>, (status) =&gt; {
+  console.<span class="fn">log</span>(`${status.userId} is now ${status.status}`);
+});
+
+<span class="cm">// Incoming call event</span>
+client.<span class="fn">on</span>(<span class="str">'call.incoming'</span>, (call) =&gt; {
+  console.<span class="fn">log</span>(`Incoming call from ${call.callerId}`);
+});
+
+<span class="cm">// Remove listener</span>
+<span class="fn">unsub</span>();</code></pre>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Module</th><th>Key Methods</th></tr>
+          <tr><td><code>client.chat</code></td><td><code>channel(id)</code>, <code>channel.watch()</code>, <code>channel.sendMessage()</code>, <code>channel.on(event, cb)</code></td></tr>
+          <tr><td><code>client.calls</code></td><td><code>start(input)</code>, <code>accept(callId)</code>, <code>reject(callId)</code>, <code>end(callId)</code></td></tr>
+          <tr><td><code>client.presence</code></td><td><code>update(status)</code>, <code>get(userId)</code>, <code>getMany(userIds)</code></td></tr>
+          <tr><td><code>client.on(event, cb)</code></td><td>Global event subscription — returns unsubscribe fn</td></tr>
+          <tr><td><code>client.registerDevice(input)</code></td><td>Register push token for the current user</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 21. SERVER SDK ═══════════════ -->
+    <section class="section" id="serversdk">
+      <h2><span class="sec-num">21</span> Server SDK</h2>
+      <p>The Server SDK (<code>@rajutechie-streamkit/server-sdk</code>) is a Node.js-only package for backend operations: token generation, server-side API calls, and webhook verification. Never expose your <code>apiSecret</code> to the browser.</p>
+
+      <h3>Installation</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>npm install @rajutechie-streamkit/server-sdk</code></pre>
+      </div>
+
+      <h3>Initialize</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { RajutechieStreamKitServer } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/server-sdk'</span>;
+
+<span class="kw">const</span> server = <span class="kw">new</span> <span class="fn">RajutechieStreamKitServer</span>({
+  apiKey:    process.env.<span class="tp">STREAMKIT_API_KEY</span>!,
+  apiSecret: process.env.<span class="tp">STREAMKIT_API_SECRET</span>!,
+  apiUrl:    process.env.<span class="tp">STREAMKIT_API_URL</span>, <span class="cm">// optional, defaults to localhost:3000</span>
+});</code></pre>
+      </div>
+
+      <h3>Token Generation</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript — Express route</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>app.<span class="fn">post</span>(<span class="str">'/api/token'</span>, (req, res) =&gt; {
+  <span class="kw">const</span> token = server.<span class="fn">generateToken</span>({
+    userId:    req.user.id,
+    role:      req.user.role,      <span class="cm">// 'user' | 'admin' | 'moderator'</span>
+    expiresIn: <span class="str">'1h'</span>,
+    grants: {
+      chat:    [<span class="str">'read'</span>, <span class="str">'write'</span>],
+      call:    [<span class="str">'start'</span>, <span class="str">'join'</span>],
+      meeting: [<span class="str">'join'</span>],
+      stream:  [<span class="str">'view'</span>],
+    },
+  });
+  res.<span class="fn">json</span>({ token });
+});</code></pre>
+      </div>
+
+      <h3>API Namespaces</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Namespace</th><th>Key Methods</th></tr>
+          <tr><td><code>server.chat</code></td><td><code>createChannel(input)</code>, <code>deleteChannel(id)</code>, <code>sendMessage(channelId, msg)</code></td></tr>
+          <tr><td><code>server.users</code></td><td><code>create</code>, <code>get</code>, <code>list</code>, <code>update</code>, <code>delete</code>, <code>registerDevice</code>, <code>removeDevice</code></td></tr>
+          <tr><td><code>server.calls</code></td><td><code>create</code>, <code>get</code>, <code>list</code>, <code>end</code>, <code>startRecording</code>, <code>stopRecording</code></td></tr>
+          <tr><td><code>server.meetings</code></td><td><code>schedule</code>, <code>get</code>, <code>list</code>, <code>update</code>, <code>cancel</code>, <code>end</code>, <code>addParticipant</code>, <code>removeParticipant</code>, <code>muteAll</code></td></tr>
+          <tr><td><code>server.streams</code></td><td><code>create</code>, <code>get</code>, <code>list</code>, <code>start</code>, <code>stop</code>, <code>delete</code></td></tr>
+          <tr><td><code>server.moderation</code></td><td><code>banUser</code>, <code>unbanUser</code>, <code>listBans</code>, <code>createRule</code>, <code>deleteRule</code>, <code>listRules</code>, <code>listReports</code>, <code>resolveReport</code></td></tr>
+          <tr><td><code>server.notifications</code></td><td><code>send</code>, <code>sendBulk</code>, <code>getPreferences</code>, <code>updatePreferences</code></td></tr>
+        </table>
+      </div>
+
+      <h3>Webhook Verification</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> { verifyWebhookSignature } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/server-sdk'</span>;
+
+app.<span class="fn">post</span>(<span class="str">'/webhooks/streamkit'</span>, express.<span class="fn">raw</span>({ type: <span class="str">'application/json'</span> }), (req, res) =&gt; {
+  <span class="kw">const</span> isValid = <span class="fn">verifyWebhookSignature</span>(
+    req.body,
+    req.headers[<span class="str">'x-streamkit-signature'</span>] <span class="kw">as</span> <span class="tp">string</span>,
+    process.env.<span class="tp">WEBHOOK_SECRET</span>!,
+  );
+  <span class="kw">if</span> (!isValid) <span class="kw">return</span> res.<span class="fn">sendStatus</span>(<span class="num">401</span>);
+
+  <span class="kw">const</span> event = JSON.<span class="fn">parse</span>(req.body.toString());
+  <span class="cm">// Handle event.type: 'message.new' | 'call.ended' | 'user.banned' …</span>
+  res.<span class="fn">sendStatus</span>(<span class="num">200</span>);
+});</code></pre>
+      </div>
+
+      <div class="callout warn"><span class="ci">⚠</span><p>Never use the Server SDK in browser bundles — it exposes your <code>apiSecret</code>. Use it exclusively in Node.js server environments (Express, Next.js API routes, serverless functions).</p></div>
+    </section>
+
+    <!-- ═══════════════ 22. EXPRESS ADAPTER ═══════════════ -->
+    <section class="section" id="expressadapter">
+      <h2><span class="sec-num">22</span> Express Adapter</h2>
+      <p>The Express Adapter (<code>@rajutechie-streamkit/backend-adapters-express</code>) mounts a fully-featured StreamKit REST router onto any Express app in one line. It exposes 30+ endpoints covering all StreamKit resources.</p>
+
+      <h3>Installation</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>npm install @rajutechie-streamkit/backend-adapters-express @rajutechie-streamkit/server-sdk</code></pre>
+      </div>
+
+      <h3>Mount the Router</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript — server.ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">import</span> express <span class="kw">from</span> <span class="str">'express'</span>;
+<span class="kw">import</span> { createStreamKitRouter } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/backend-adapters-express'</span>;
+<span class="kw">import</span> { RajutechieStreamKitServer } <span class="kw">from</span> <span class="str">'@rajutechie-streamkit/server-sdk'</span>;
+
+<span class="kw">const</span> app = <span class="fn">express</span>();
+app.<span class="fn">use</span>(express.<span class="fn">json</span>());
+
+<span class="kw">const</span> server = <span class="kw">new</span> <span class="fn">RajutechieStreamKitServer</span>({
+  apiKey:    process.env.<span class="tp">STREAMKIT_API_KEY</span>!,
+  apiSecret: process.env.<span class="tp">STREAMKIT_API_SECRET</span>!,
+});
+
+<span class="cm">// Mount all StreamKit endpoints at /api/streamkit</span>
+app.<span class="fn">use</span>(<span class="str">'/api/streamkit'</span>, <span class="fn">createStreamKitRouter</span>(server));
+
+app.<span class="fn">listen</span>(<span class="num">3000</span>);</code></pre>
+      </div>
+
+      <h3>Endpoint Reference</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+          <tr><td><code>POST</code></td><td><code>/token</code></td><td>Generate a user JWT</td></tr>
+          <tr><td colspan="3" style="color:#94a3b8;font-size:12px;padding:6px 12px">Users</td></tr>
+          <tr><td><code>POST</code></td><td><code>/users</code></td><td>Create user</td></tr>
+          <tr><td><code>GET</code></td><td><code>/users</code></td><td>List users (with pagination)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/users/:userId</code></td><td>Get user by ID</td></tr>
+          <tr><td><code>PATCH</code></td><td><code>/users/:userId</code></td><td>Update user</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/users/:userId</code></td><td>Delete user</td></tr>
+          <tr><td><code>POST</code></td><td><code>/users/:userId/devices</code></td><td>Register push device</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/users/:userId/devices/:deviceId</code></td><td>Remove device</td></tr>
+          <tr><td colspan="3" style="color:#94a3b8;font-size:12px;padding:6px 12px">Calls</td></tr>
+          <tr><td><code>POST</code></td><td><code>/calls</code></td><td>Create call</td></tr>
+          <tr><td><code>GET</code></td><td><code>/calls</code></td><td>List calls</td></tr>
+          <tr><td><code>GET</code></td><td><code>/calls/:callId</code></td><td>Get call</td></tr>
+          <tr><td><code>POST</code></td><td><code>/calls/:callId/end</code></td><td>End call</td></tr>
+          <tr><td><code>POST</code></td><td><code>/calls/:callId/recording/start</code></td><td>Start recording</td></tr>
+          <tr><td><code>POST</code></td><td><code>/calls/:callId/recording/stop</code></td><td>Stop recording</td></tr>
+          <tr><td colspan="3" style="color:#94a3b8;font-size:12px;padding:6px 12px">Meetings</td></tr>
+          <tr><td><code>POST</code></td><td><code>/meetings</code></td><td>Schedule meeting</td></tr>
+          <tr><td><code>GET</code></td><td><code>/meetings/:meetingId</code></td><td>Get meeting</td></tr>
+          <tr><td><code>PATCH</code></td><td><code>/meetings/:meetingId</code></td><td>Update meeting</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/meetings/:meetingId</code></td><td>Cancel meeting</td></tr>
+          <tr><td><code>POST</code></td><td><code>/meetings/:meetingId/end</code></td><td>End live meeting</td></tr>
+          <tr><td><code>POST</code></td><td><code>/meetings/:meetingId/mute-all</code></td><td>Mute all participants</td></tr>
+          <tr><td colspan="3" style="color:#94a3b8;font-size:12px;padding:6px 12px">Streams, Moderation, Notifications</td></tr>
+          <tr><td><code>POST</code></td><td><code>/streams</code></td><td>Create live stream</td></tr>
+          <tr><td><code>POST</code></td><td><code>/streams/:streamId/start</code></td><td>Start stream</td></tr>
+          <tr><td><code>POST</code></td><td><code>/streams/:streamId/stop</code></td><td>Stop stream</td></tr>
+          <tr><td><code>POST</code></td><td><code>/moderation/bans</code></td><td>Ban user</td></tr>
+          <tr><td><code>GET</code></td><td><code>/moderation/reports</code></td><td>List moderation reports</td></tr>
+          <tr><td><code>POST</code></td><td><code>/notifications/send</code></td><td>Send notification to user</td></tr>
+          <tr><td><code>POST</code></td><td><code>/notifications/bulk</code></td><td>Send bulk notifications</td></tr>
+          <tr><td><code>GET</code></td><td><code>/notifications/preferences/:userId</code></td><td>Get notification prefs</td></tr>
+        </table>
+      </div>
+
+      <div class="callout tip"><span class="ci">✓</span><p>All endpoints validate the request using the Server SDK and return JSON. Errors are returned as <code>{ "error": "message" }</code> with the appropriate HTTP status code.</p></div>
+    </section>
+
+    <!-- ═══════════════ 23. EXAMPLE PROJECTS ═══════════════ -->
+    <section class="section" id="examples">
+      <h2><span class="sec-num">23</span> Example Projects</h2>
+      <p>Four complete reference implementations are included in <code>docs/examples/</code>. Each demonstrates the full feature set — chat, calls, meetings, and live streaming — using a different frontend/backend stack.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Example</th><th>Frontend</th><th>Backend</th><th>Location</th></tr>
+          <tr><td><strong>flutter-django</strong></td><td>Flutter 3.16+</td><td>Django 4.2 + DRF</td><td><code>docs/examples/flutter-django/</code></td></tr>
+          <tr><td><strong>flutter-springboot</strong></td><td>Flutter 3.16+</td><td>Spring Boot 3.2 (Java 17)</td><td><code>docs/examples/flutter-springboot/</code></td></tr>
+          <tr><td><strong>react-django</strong></td><td>React 18 + Vite + TS</td><td>Django 4.2 + DRF</td><td><code>docs/examples/react-django/</code></td></tr>
+          <tr><td><strong>react-springboot</strong></td><td>React 18 + Vite + TS</td><td>Spring Boot 3.2 (Java 17)</td><td><code>docs/examples/react-springboot/</code></td></tr>
+        </table>
+      </div>
+
+      <h3>Common Architecture</h3>
+      <p>All four examples share the same conceptual architecture:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Architecture</span></div>
+        <pre><code>┌──────────────────────────┐     JWT Token      ┌───────────────────────┐
+│  Frontend (Flutter/React) │ ─────────────────► │  Your Backend         │
+│                           │                    │  (Django / Spring Boot)│
+│  • StreamKit SDK          │ ◄───────────────── │  • /api/auth/login     │
+│  • Real-time WebSocket    │     {user, token}  │  • /api/meetings       │
+│  • Video/Audio (WebRTC)   │                    │  • /api/calls          │
+└──────────────────────────┘                    │  • /api/streams        │
+             │                                   └──────────┬────────────┘
+             │  WebSocket + WebRTC                          │ StreamKit Server SDK
+             ▼                                             ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                  StreamKit Platform (self-hosted)                     │
+│  API Gateway :3000 → Chat / Call / Meeting / Stream / Presence       │
+│  Signaling Server :3030 → WebRTC negotiation (mediasoup)             │
+└──────────────────────────────────────────────────────────────────────┘</code></pre>
+      </div>
+
+      <h3>Features in Every Example</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Feature</th><th>Frontend</th><th>Backend endpoint</th></tr>
+          <tr><td>Auth (login / register)</td><td>Login screen / page</td><td><code>POST /api/auth/login</code> <code>POST /api/auth/register</code></td></tr>
+          <tr><td>Real-time Chat</td><td>Channel list + chat window</td><td><code>POST /api/channels/create</code> <code>GET /api/channels</code></td></tr>
+          <tr><td>Audio / Video Calls</td><td>Call screen + incoming call dialog</td><td><code>POST /api/calls</code> <code>GET /api/calls/:id</code></td></tr>
+          <tr><td>Meetings (scheduled)</td><td>Meeting list + meeting room</td><td><code>POST /api/meetings/create</code> <code>POST /api/meetings/:id/join</code></td></tr>
+          <tr><td>Live Streaming</td><td>Stream host + viewer screens</td><td><code>POST /api/streams/create</code> <code>POST /api/streams/:id/start</code></td></tr>
+          <tr><td>Webhooks</td><td>—</td><td><code>POST /api/webhooks/rajutechie-streamkit</code></td></tr>
+        </table>
+      </div>
+
+      <h3>Quick Start — Django Backend</h3>
+      <p>Applies to both <code>flutter-django</code> and <code>react-django</code>:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>cd docs/examples/react-django/backend    <span class="cm"># or flutter-django/backend</span>
+
+python -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt
+
+<span class="cm"># Configure environment</span>
+cp .env.example .env
+<span class="cm"># Edit .env: set RAJUTECHIE_STREAMKIT_API_KEY and RAJUTECHIE_STREAMKIT_API_SECRET</span>
+
+python manage.py runserver 0.0.0.0:8000</code></pre>
+      </div>
+
+      <h3>Quick Start — Spring Boot Backend</h3>
+      <p>Applies to both <code>flutter-springboot</code> and <code>react-springboot</code>:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>cd docs/examples/react-springboot/backend    <span class="cm"># or flutter-springboot/backend</span>
+
+<span class="cm"># Set environment variables (or edit application.yml)</span>
+export RAJUTECHIE_STREAMKIT_API_KEY=sk_dev_...
+export RAJUTECHIE_STREAMKIT_API_SECRET=your-secret
+export RAJUTECHIE_STREAMKIT_WEBHOOK_SECRET=your-webhook-secret
+
+./mvnw spring-boot:run    <span class="cm"># or: mvn spring-boot:run</span>
+<span class="cm"># Server starts at http://localhost:8080</span></code></pre>
+      </div>
+
+      <h3>Quick Start — React Frontend</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>cd docs/examples/react-django/frontend    <span class="cm"># or react-springboot/frontend</span>
+
+cp .env.example .env
+<span class="cm"># Edit VITE_RAJUTECHIE_STREAMKIT_API_KEY</span>
+
+npm install
+npm run dev    <span class="cm"># Opens http://localhost:5173</span></code></pre>
+      </div>
+
+      <h3>Quick Start — Flutter App</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>cd docs/examples/flutter-django/app    <span class="cm"># or flutter-springboot/app</span>
+
+flutter pub get
+flutter run    <span class="cm"># Android emulator uses 10.0.2.2:8000 (Django) or :8080 (Spring Boot)</span></code></pre>
+      </div>
+
+      <h3>Key Implementation Patterns</h3>
+
+      <h4>Django — Token Generation</h4>
+      <p>The backend issues StreamKit JWTs after validating credentials. The JWT is returned to the frontend and used to authenticate the SDK client.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python — api/views.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">from</span> rajutechie_streamkit_django <span class="kw">import</span> generate_user_token
+
+token = <span class="fn">generate_user_token</span>(
+    user_id=user[<span class="str">"id"</span>],
+    name=user[<span class="str">"display_name"</span>],
+    role=<span class="str">"user"</span>,
+    expires_in=<span class="num">86400</span>,  <span class="cm"># 24 hours</span>
+)
+<span class="kw">return</span> Response({<span class="str">"user"</span>: user_data, <span class="str">"token"</span>: token})</code></pre>
+      </div>
+
+      <h4>Spring Boot — Token Service</h4>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">java — TokenService.java</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Inject via @Service and call from AuthController</span>
+<span class="kw">public</span> String <span class="fn">generateToken</span>(String userId, String displayName, String role) {
+    <span class="kw">return</span> Jwts.builder()
+        .subject(userId)
+        .claim(<span class="str">"name"</span>, displayName)
+        .claim(<span class="str">"role"</span>, role)
+        .issuer(apiKey)
+        .expiration(Date.from(Instant.now().plus(<span class="num">24</span>, ChronoUnit.HOURS)))
+        .signWith(Keys.hmacShaKeyFor(apiSecret.getBytes()))
+        .compact();
+}</code></pre>
+      </div>
+
+      <h4>React — SDK Provider + usePresence</h4>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">tsx — App.tsx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// Wrap authenticated routes with the provider</span>
+&lt;RajutechieStreamKitProvider apiKey={API_KEY} userToken={token}&gt;
+  &lt;Routes&gt;
+    &lt;Route path=<span class="str">"/chat"</span> element={&lt;ChatPage /&gt;} /&gt;
+    &lt;Route path=<span class="str">"/call"</span> element={&lt;CallPage /&gt;} /&gt;
+    &lt;Route path=<span class="str">"/meeting"</span> element={&lt;MeetingPage /&gt;} /&gt;
+    &lt;Route path=<span class="str">"/stream"</span> element={&lt;StreamPage /&gt;} /&gt;
+  &lt;/Routes&gt;
+&lt;/RajutechieStreamKitProvider&gt;
+
+<span class="cm">// In any component — real-time presence for a list of users</span>
+<span class="kw">const</span> presenceMap = <span class="fn">usePresence</span>(allUserIds);
+<span class="kw">const</span> isOnline = presenceMap.<span class="fn">get</span>(userId)?.status === <span class="str">'online'</span>;</code></pre>
+      </div>
+
+      <h4>Flutter — API Service + StreamKit Client</h4>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">dart — auth_service.dart</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="cm">// After login, initialize the StreamKit client with the returned token</span>
+<span class="kw">final</span> result = <span class="kw">await</span> _api.<span class="fn">login</span>(username, password);
+_token = result[<span class="str">'token'</span>];
+_api.<span class="fn">setToken</span>(_token);
+
+_client = <span class="fn">RajutechieStreamKitClient</span>(apiKey: <span class="str">'sk_...'</span>);
+<span class="kw">await</span> _client.<span class="fn">connectUser</span>(
+  userId: result[<span class="str">'user'</span>][<span class="str">'id'</span>],
+  token: _token!,
+);
+
+<span class="cm">// Listen for incoming calls globally from HomeScreen</span>
+_incomingCallSub = _client.call.incomingCalls.<span class="fn">listen</span>((data) {
+  <span class="fn">showDialog</span>(context: context, builder: (_) =&gt; IncomingCallDialog(...));
+});</code></pre>
+      </div>
+
+      <h4>Webhook Handler Pattern (Django)</h4>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">python — api/webhooks.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code><span class="kw">from</span> rajutechie_streamkit_django.webhooks <span class="kw">import</span> webhook_handler
+
+<span class="cm"># Decorator automatically verifies the request signature</span>
+<span class="at">@webhook_handler</span>(<span class="str">"meeting.started"</span>)
+<span class="kw">def</span> <span class="fn">handle_meeting_started</span>(event):
+    data = event.data
+    logger.<span class="fn">info</span>(<span class="str">"Meeting %s started: %s"</span>, data.<span class="fn">get</span>(<span class="str">"id"</span>), data.<span class="fn">get</span>(<span class="str">"title"</span>))
+    <span class="cm"># Notify invitees, start recording, update dashboards, etc.</span>
+
+<span class="at">@webhook_handler</span>(<span class="str">"meeting.ended"</span>)
+<span class="kw">def</span> <span class="fn">handle_meeting_ended</span>(event):
+    data = event.data
+    <span class="cm"># Finalize recordings, send summaries, update billing</span></code></pre>
+      </div>
+
+      <div class="callout tip"><span class="ci">✓</span><p>All four examples use <strong>in-memory storage</strong> for simplicity (no database setup required). For production, replace the in-memory dicts/Maps with Prisma (Node.js), Django ORM, or Spring Data JPA repositories as described in the <a href="#selfhosting">Self-Hosting Guide</a>.</p></div>
+
+      <div class="callout warn"><span class="ci">⚠</span><p>The Android emulator cannot reach <code>localhost</code> on your host machine. Use <code>10.0.2.2</code> instead (which maps to the host loopback). iOS Simulator can use <code>localhost</code> directly. Physical devices need your machine's LAN IP address.</p></div>
+    </section>
+
+  </article>
+</div>
+
+<!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+<script>
+// Copy to clipboard
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Active nav link on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+// Nav search filter
+function filterNav(query) {
+  const q = query.toLowerCase();
+  navLinks.forEach(link => {
+    const text = link.textContent.toLowerCase();
+    link.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-section-label').forEach(label => {
+    const next = label.nextElementSibling;
+    label.style.display = (!q) ? '' : 'none';
+  });
+}
+
+// Mobile menu toggle
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.getElementById('sidebar');
+menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 680 && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+    sidebar.classList.remove('open');
+  }
+});
+
+// Close mobile menu on nav click
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 680) sidebar.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

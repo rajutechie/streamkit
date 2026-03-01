@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rajutechie-streamkit-fastapi"
+version = "0.1.0"
+description = "RajutechieStreamKit SDK for FastAPI"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "PyJWT>=2.8.0",
+    "httpx>=0.25.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "httpx"]

@@ -1,0 +1,83 @@
+# SwiftLint Configuration for RajutechieStreamKit
+
+# Rules to enable
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - explicit_init
+  - first_where
+  - sorted_first_last
+  - contains_over_first_not_nil
+  - fallthrough
+  - fatal_error_message
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - multiline_parameters
+  - operator_usage_whitespace
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - single_test_class
+  - sorted_imports
+  - unneeded_parentheses_in_closure_argument
+  - vertical_parameter_alignment_on_call
+
+# Rules to disable
+disabled_rules:
+  - todo
+  - line_length # Handled by warning threshold below
+
+# Rule configurations
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 500
+  error: 1000
+
+function_body_length:
+  warning: 50
+  error: 100
+
+type_name:
+  min_length: 3
+  max_length:
+    warning: 40
+    error: 50
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 40
+    error: 50
+  excluded:
+    - id
+    - ws
+    - url
+    - to
+    - in
+
+# Paths to exclude from linting
+excluded:
+  - .build
+  - .swiftpm
+  - Tests/LinuxMain.swift
+  - Tests/RajutechieStreamKitTests/XCTestManifests.swift
+  - Packages
+  - vendor
+
+# Paths to include for linting
+included:
+  - Sources
+  - Tests
+
+# Reporter type
+reporter: "xcode"

@@ -1,0 +1,71 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rajutechie-streamkit-api-ingress
+  namespace: rajutechie-streamkit
+  labels:
+    app.kubernetes.io/name: rajutechie-streamkit
+    app.kubernetes.io/part-of: rajutechie-streamkit-platform
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.rajutechie-streamkit.io
+      secretName: rajutechie-streamkit-api-tls
+  rules:
+    - host: api.rajutechie-streamkit.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rajutechie-streamkit-ws-ingress
+  namespace: rajutechie-streamkit
+  labels:
+    app.kubernetes.io/name: rajutechie-streamkit
+    app.kubernetes.io/part-of: rajutechie-streamkit-platform
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    nginx.ingress.kubernetes.io/websocket-services: ws-gateway
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - ws.rajutechie-streamkit.io
+      secretName: rajutechie-streamkit-ws-tls
+  rules:
+    - host: ws.rajutechie-streamkit.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ws-gateway
+                port:
+                  number: 3001

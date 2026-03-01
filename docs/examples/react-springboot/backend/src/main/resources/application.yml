@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+rajutechie-streamkit:
+  api-key: ${RAJUTECHIE_STREAMKIT_API_KEY:sk_dev_rajutechie-streamkit_001}
+  api-secret: ${RAJUTECHIE_STREAMKIT_API_SECRET:dev_secret_001_change_me_in_production}
+  webhook-secret: ${RAJUTECHIE_STREAMKIT_WEBHOOK_SECRET:whsec_dev_secret}
+
+cors:
+  allowed-origins: http://localhost:5173
+
+spring:
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+logging:
+  level:
+    com.rajutechie.streamkit: DEBUG
+    org.springframework.security: INFO

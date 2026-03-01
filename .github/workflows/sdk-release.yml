@@ -1,0 +1,287 @@
+# RajutechieStreamKit - SDK Release Pipeline
+# Triggered when a version tag (v*) is pushed. Builds, tests, and publishes
+# all SDK packages to npm (with OIDC provenance) and triggers Flutter pub.dev
+# publishing. Creates a GitHub Release with auto-generated changelog.
+
+name: SDK Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Validate - build and test everything before publishing
+  # ──────────────────────────────────────────────────────────────
+  validate:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-release-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-release-
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+  # ──────────────────────────────────────────────────────────────
+  # Publish npm packages with OIDC provenance
+  # ──────────────────────────────────────────────────────────────
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: npm-publish
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set package versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PACKAGES=(
+            "packages/core"
+            "packages/js-sdk"
+            "packages/react-sdk"
+            "packages/react-native-sdk"
+            "packages/angular-sdk"
+            "packages/server-sdk"
+          )
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Setting version ${VERSION} for ${pkg}"
+            cd "${pkg}"
+            npm version "${VERSION}" --no-git-tag-version --allow-same-version
+            cd "${GITHUB_WORKSPACE}"
+          done
+
+      - name: Publish @rajutechie-streamkit/core
+        working-directory: packages/core
+        run: pnpm publish --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @rajutechie-streamkit/js-sdk
+        working-directory: packages/js-sdk
+        run: pnpm publish --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @rajutechie-streamkit/react-sdk
+        working-directory: packages/react-sdk
+        run: pnpm publish --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @rajutechie-streamkit/react-native-sdk
+        working-directory: packages/react-native-sdk
+        run: pnpm publish --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @rajutechie-streamkit/angular-sdk
+        working-directory: packages/angular-sdk
+        run: pnpm publish --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @rajutechie-streamkit/server-sdk
+        working-directory: packages/server-sdk
+        run: pnpm publish --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────────
+  # Trigger Flutter SDK publish to pub.dev
+  # ──────────────────────────────────────────────────────────────
+  publish-flutter:
+    name: Publish Flutter SDK
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: pub-dev-publish
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.x"
+          channel: stable
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Update pubspec version
+        working-directory: sdks/flutter
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/^version: .*/version: ${VERSION}/" pubspec.yaml
+
+      - name: Install dependencies
+        working-directory: sdks/flutter
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: sdks/flutter
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        working-directory: sdks/flutter
+        run: flutter test
+
+      - name: Dry-run publish
+        working-directory: sdks/flutter
+        run: flutter pub publish --dry-run
+
+      - name: Publish to pub.dev
+        working-directory: sdks/flutter
+        run: flutter pub publish --force
+        env:
+          PUB_TOKEN: ${{ secrets.PUB_DEV_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────────
+  # Create GitHub Release with changelog
+  # ──────────────────────────────────────────────────────────────
+  github-release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    needs: [publish-npm, publish-flutter]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Find the previous tag
+          PREV_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
+          if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "${{ github.ref_name }}" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          echo "Generating changelog from ${PREV_TAG} to ${{ github.ref_name }}"
+
+          {
+            echo "changelog<<CHANGELOG_EOF"
+            echo "## What's Changed"
+            echo ""
+
+            # Group commits by type
+            FEATURES=$(git log "${PREV_TAG}..${{ github.ref_name }}" --pretty=format:"- %s (%h)" --grep="^feat" 2>/dev/null || true)
+            FIXES=$(git log "${PREV_TAG}..${{ github.ref_name }}" --pretty=format:"- %s (%h)" --grep="^fix" 2>/dev/null || true)
+            OTHERS=$(git log "${PREV_TAG}..${{ github.ref_name }}" --pretty=format:"- %s (%h)" --invert-grep --grep="^feat" --grep="^fix" 2>/dev/null || true)
+
+            if [ -n "$FEATURES" ]; then
+              echo "### Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+
+            if [ -n "$OTHERS" ]; then
+              echo "### Other Changes"
+              echo "$OTHERS"
+              echo ""
+            fi
+
+            echo "---"
+            echo ""
+            echo "### Published Packages"
+            echo "| Package | Version |"
+            echo "|---------|---------|"
+            echo "| \`@rajutechie-streamkit/core\` | ${{ steps.version.outputs.version }} |"
+            echo "| \`@rajutechie-streamkit/js-sdk\` | ${{ steps.version.outputs.version }} |"
+            echo "| \`@rajutechie-streamkit/react-sdk\` | ${{ steps.version.outputs.version }} |"
+            echo "| \`@rajutechie-streamkit/react-native-sdk\` | ${{ steps.version.outputs.version }} |"
+            echo "| \`@rajutechie-streamkit/angular-sdk\` | ${{ steps.version.outputs.version }} |"
+            echo "| \`@rajutechie-streamkit/server-sdk\` | ${{ steps.version.outputs.version }} |"
+            echo "| \`rajutechie-streamkit_flutter\` (pub.dev) | ${{ steps.version.outputs.version }} |"
+            echo ""
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: RajutechieStreamKit ${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          generate_release_notes: true
