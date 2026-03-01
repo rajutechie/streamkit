@@ -45,8 +45,23 @@ function App() {
 |------|------|----------|-------------|
 | `apiKey` | `string` | Yes | Your RajutechieStreamKit project API key |
 | `userToken` | `string` | No | JWT token for the current user. When provided, the SDK connects automatically. When removed, the SDK disconnects. |
-| `config` | `Partial<RajutechieStreamKitConfig>` | No | Optional overrides for region, API URL, WebSocket URL, log level, auto-reconnect |
+| `config` | `Partial<RajutechieStreamKitConfig>` | No | Override `apiUrl`, `wsUrl`, log level, and auto-reconnect for your self-hosted instance |
 | `children` | `ReactNode` | Yes | Your application components |
+
+For a self-hosted StreamKit instance, pass `apiUrl` and `wsUrl` via `config`:
+
+```tsx
+<RajutechieStreamKitProvider
+  apiKey="sk_live_xxxxx"
+  userToken={userToken}
+  config={{
+    apiUrl: 'https://your-streamkit-domain.com',
+    wsUrl:  'wss://your-streamkit-domain.com',
+  }}
+>
+  <YourApp />
+</RajutechieStreamKitProvider>
+```
 
 The provider automatically:
 - Creates a singleton `RajutechieStreamKitClient` keyed by `apiKey`

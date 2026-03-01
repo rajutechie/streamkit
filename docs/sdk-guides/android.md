@@ -24,18 +24,18 @@ Add the dependency to your module-level `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.rajutechie.streamkit:rajutechie-streamkit-sdk:1.0.0")
+    implementation("com.github.rajutechie.streamkit:streamkit-sdk:1.0.0")
 }
 ```
 
-Add the Maven repository to your project-level `settings.gradle.kts`:
+Add the JitPack Maven repository to your project-level `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://maven.rajutechie-streamkit.io/releases")
+        maven("https://jitpack.io")
     }
 }
 ```
@@ -64,7 +64,6 @@ Initialize RajutechieStreamKit once in your `Application` class:
 ```kotlin
 import com.rajutechie.streamkit.RajutechieStreamKit
 import com.rajutechie.streamkit.RajutechieStreamKitConfig
-import com.rajutechie.streamkit.Region
 
 class MyApp : Application() {
     override fun onCreate() {
@@ -74,7 +73,8 @@ class MyApp : Application() {
             context = this,
             config = RajutechieStreamKitConfig(
                 apiKey = "sk_live_xxxxx",
-                region = Region.US_EAST_1
+                apiUrl = "https://your-streamkit-domain.com",
+                wsUrl  = "wss://your-streamkit-domain.com"
             )
         )
     }
@@ -92,9 +92,8 @@ val streamKit = RajutechieStreamKit.getInstance()
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `apiKey` | `String` | required | Your RajutechieStreamKit API key |
-| `region` | `Region` | `US_EAST_1` | Server region |
-| `apiUrl` | `String` | `https://api.rajutechie-streamkit.io/v1` | REST API base URL |
-| `wsUrl` | `String` | `wss://ws.rajutechie-streamkit.io` | WebSocket server URL |
+| `apiUrl` | `String` | required | REST API base URL of your self-hosted instance |
+| `wsUrl` | `String` | required | WebSocket URL of your self-hosted instance |
 | `logLevel` | `LogLevel` | `WARN` | Logging verbosity |
 
 ---
@@ -242,7 +241,7 @@ lifecycleScope.launch {
 
 ```kotlin
 lifecycleScope.launch {
-    streamKit.call.incomingCalls.collect { incoming ->
+    streamKit.call.observeIncomingCalls().collect { incoming ->
         // Show incoming call dialog
         showIncomingCallDialog(
             callerName = incoming.callerName,
@@ -283,6 +282,31 @@ call.stopScreenShare()
 
 // End call
 call.end()
+```
+
+### Call Statistics
+
+```kotlin
+lifecycleScope.launch {
+    val stats: CallStats = streamKit.call.getStats(call.id)
+    Log.d("Call", "Duration: ${stats.duration}s, Bitrate: ${stats.bitrate}bps")
+    Log.d("Call", "Packet loss: ${stats.packetLoss}%")
+}
+```
+
+### Call Events
+
+```kotlin
+lifecycleScope.launch {
+    streamKit.call.observeCallEvents(call.id).collect { event ->
+        when (event.type) {
+            "participant.joined" -> Log.d("Call", "${event.userId} joined")
+            "participant.left"   -> Log.d("Call", "${event.userId} left")
+            "recording.started"  -> showRecordingBadge()
+            "recording.stopped"  -> hideRecordingBadge()
+        }
+    }
+}
 ```
 
 ---
@@ -328,17 +352,62 @@ meeting.removeParticipant(userId = "user_003")
 meeting.end()
 ```
 
-### Participant Events
+### Observing Participants (Real-time)
 
 ```kotlin
 lifecycleScope.launch {
-    meeting.participantEvents.collect { event ->
-        when (event.action) {
-            "joined" -> Log.d("Meeting", "${event.user.name} joined")
-            "left" -> Log.d("Meeting", "${event.user.name} left")
+    streamKit.meeting.observeParticipants(meeting.id).collect { participants ->
+        updateParticipantList(participants)
+    }
+}
+```
+
+### Observing Participant Left Events
+
+```kotlin
+lifecycleScope.launch {
+    streamKit.meeting.observeParticipantLeft(meeting.id).collect { event ->
+        Log.d("Meeting", "${event.userId} left the meeting")
+    }
+}
+```
+
+### Polls
+
+```kotlin
+// Create a poll (host only)
+val poll = streamKit.meeting.createPoll(
+    meetingId = meeting.id,
+    question = "Which date works best?",
+    options = listOf("Monday", "Wednesday", "Friday")
+)
+
+// Vote on a poll
+streamKit.meeting.votePoll(
+    meetingId = meeting.id,
+    pollId = poll.id,
+    optionId = "opt-0"
+)
+
+// Observe poll results in real time
+lifecycleScope.launch {
+    streamKit.meeting.observePolls(meeting.id).collect { polls ->
+        polls.forEach { poll ->
+            Log.d("Poll", "${poll.question}: ${poll.options}")
         }
     }
 }
+```
+
+### Breakout Rooms
+
+```kotlin
+val rooms = streamKit.meeting.createBreakoutRooms(
+    meetingId = meeting.id,
+    count = 3,
+    assignAutomatically = true
+)
+Log.d("Meeting", "Created ${rooms.size} breakout rooms")
 ```
 
 ---

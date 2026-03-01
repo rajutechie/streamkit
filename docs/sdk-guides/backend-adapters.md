@@ -42,7 +42,7 @@ Add to `settings.py`:
 ```python
 RAJUTECHIE_STREAMKIT_API_KEY = "sk_live_xxxxx"
 RAJUTECHIE_STREAMKIT_API_SECRET = "secret_xxxxx"
-RAJUTECHIE_STREAMKIT_API_URL = "https://api.rajutechie-streamkit.io/v1"  # optional
+RAJUTECHIE_STREAMKIT_API_URL = "https://your-streamkit-domain.com"
 ```
 
 ### Client Usage
@@ -207,16 +207,16 @@ async def generate_token(user_id: str):
 ### Dependency Injection
 
 ```python
-from rajutechie_streamkit_fastapi import get_rajutechie-streamkit
+from rajutechie_streamkit_fastapi import get_streamkit_client
 from fastapi import Depends
 
 @app.post("/api/channels")
 async def create_channel(
     name: str,
     members: list[str],
-    rajutechie-streamkit: RajutechieStreamKitClient = Depends(get_rajutechie-streamkit)
+    sk: RajutechieStreamKitClient = Depends(get_streamkit_client)
 ):
-    channel = await rajutechie-streamkit.chat.create_channel(
+    channel = await sk.chat.create_channel(
         type="group", name=name, members=members
     )
     return channel
@@ -276,7 +276,7 @@ Add to `application.properties`:
 ```properties
 rajutechie-streamkit.api-key=sk_live_xxxxx
 rajutechie-streamkit.api-secret=secret_xxxxx
-rajutechie-streamkit.api-url=https://api.rajutechie-streamkit.io/v1
+rajutechie-streamkit.api-url=https://your-streamkit-domain.com
 rajutechie-streamkit.webhook-secret=whsec_your_secret
 ```
 
@@ -292,7 +292,7 @@ public class RajutechieStreamKitConfig {
         return RajutechieStreamKitClient.builder()
             .apiKey("sk_live_xxxxx")
             .apiSecret("secret_xxxxx")
-            .region(RajutechieStreamKitClient.Region.US_EAST_1)
+            .apiUrl("https://your-streamkit-domain.com")
             .build();
     }
 }
@@ -381,15 +381,16 @@ pnpm add @rajutechie-streamkit/express
 
 ```typescript
 import express from 'express';
-import { rajutechie-streamkitRouter, webhookMiddleware } from '@rajutechie-streamkit/express';
+import { streamkitRouter, webhookMiddleware } from '@rajutechie-streamkit/express';
 
 const app = express();
 
 // Auto-configure routes for token generation and webhooks
-app.use('/rajutechie-streamkit', rajutechie-streamkitRouter({
-  apiKey: process.env.RAJUTECHIE_STREAMKIT_API_KEY!,
-  apiSecret: process.env.RAJUTECHIE_STREAMKIT_API_SECRET!,
-  webhookSecret: process.env.WEBHOOK_SECRET!,
+app.use('/streamkit', streamkitRouter({
+  apiKey:         process.env.RAJUTECHIE_STREAMKIT_API_KEY!,
+  apiSecret:      process.env.RAJUTECHIE_STREAMKIT_API_SECRET!,
+  apiUrl:         process.env.STREAMKIT_API_URL!,
+  webhookSecret:  process.env.WEBHOOK_SECRET!,
 }));
 ```
 
@@ -398,13 +399,14 @@ app.use('/rajutechie-streamkit', rajutechie-streamkitRouter({
 ```typescript
 import { RajutechieStreamKitServer } from '@rajutechie-streamkit/server-sdk';
 
-const rajutechie-streamkit = new RajutechieStreamKitServer({
-  apiKey: process.env.RAJUTECHIE_STREAMKIT_API_KEY!,
+const streamkit = new RajutechieStreamKitServer({
+  apiKey:    process.env.RAJUTECHIE_STREAMKIT_API_KEY!,
   apiSecret: process.env.RAJUTECHIE_STREAMKIT_API_SECRET!,
+  apiUrl:    process.env.STREAMKIT_API_URL!,
 });
 
 app.post('/api/token', (req, res) => {
-  const token = rajutechie-streamkit.generateToken({
+  const token = streamkit.generateToken({
     userId: req.body.userId,
     role: 'user',
     expiresIn: '1h',

@@ -106,8 +106,82 @@ The React Native SDK re-exports all hooks from the React SDK with identical APIs
 | `useCall(callId?)` | Call operations, media streams, controls |
 | `useMeeting(meetingId)` | Meeting operations, participants, polls |
 | `usePresence(userIds)` | Online status tracking |
+| `useNativeChat(channelId)` | Native-optimized chat with paginated history and real-time events |
+| `useNativeMeeting(meetingId)` | Native meeting with WebRTC media, polls, and participant management |
 
-See the [React SDK Guide](./react.md) for full hook documentation and TypeScript signatures.
+See the [React SDK Guide](./react.md) for the base hook documentation.
+
+### `useNativeChat`
+
+A native-first chat hook that uses React Native's FlatList-compatible patterns and exposes paginated message loading:
+
+```tsx
+import { useNativeChat } from '@rajutechie-streamkit/react-native-sdk';
+
+function NativeChatRoom({ channelId }: { channelId: string }) {
+  const {
+    messages,       // Message[] (newest first for FlatList inverted)
+    sendMessage,    // (input: MessageInput) => Promise<void>
+    loadMore,       // () => Promise<void> — paginate older messages
+    hasMore,        // boolean
+    loading,        // boolean — initial load
+    typing,         // string[] — IDs of users currently typing
+    deleteMessage,  // (messageId: string) => Promise<void>
+  } = useNativeChat(channelId);
+
+  return (
+    <FlatList
+      data={messages}
+      inverted
+      keyExtractor={(m) => m.id}
+      onEndReached={() => hasMore && loadMore()}
+      renderItem={({ item }) => <MessageBubble message={item} />}
+    />
+  );
+}
+```
+
+### `useNativeMeeting`
+
+A native meeting hook that wraps `react-native-webrtc` for media management and exposes meeting controls:
+
+```tsx
+import { useNativeMeeting } from '@rajutechie-streamkit/react-native-sdk';
+
+function NativeMeetingRoom({ meetingId }: { meetingId: string }) {
+  const {
+    meeting,             // Meeting | null
+    participants,        // MeetingParticipant[]
+    localStream,         // MediaStream | null (from react-native-webrtc)
+    remoteStreams,        // Map<userId, MediaStream>
+    join,                // (displayName: string) => Promise<void>
+    leave,               // () => Promise<void>
+    toggleAudio,         // () => void
+    toggleVideo,         // () => void
+    flipCamera,          // () => void
+    muteParticipant,     // (userId: string) => Promise<void>
+    polls,               // MeetingPoll[]
+    createPoll,          // (input) => Promise<MeetingPoll>
+    votePoll,            // (pollId, optionId) => Promise<void>
+  } = useNativeMeeting(meetingId);
+
+  useEffect(() => {
+    join('Alice');
+    return () => { leave(); };
+  }, []);
+
+  return (
+    <View style={{ flex: 1 }}>
+      {localStream && (
+        <VideoView stream={localStream} mirror style={{ width: 120, height: 160 }} />
+      )}
+      {[...remoteStreams.entries()].map(([userId, stream]) => (
+        <VideoView key={userId} stream={stream} style={{ flex: 1 }} />
+      ))}
+    </View>
+  );
+}
+```
 
 ### Additional React Native Hooks
 

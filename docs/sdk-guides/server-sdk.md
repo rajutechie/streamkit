@@ -11,6 +11,11 @@ The RajutechieStreamKit Server SDK (`@rajutechie-streamkit/server-sdk`) is a Nod
 - [Token Generation](#token-generation)
 - [User Management](#user-management)
 - [Channel Management](#channel-management)
+- [Call Management](#call-management)
+- [Meeting Management](#meeting-management)
+- [Live Stream Management](#live-stream-management)
+- [Moderation](#moderation)
+- [Notifications](#notifications)
 - [Webhook Verification](#webhook-verification)
 - [Express Middleware](#express-middleware)
 
@@ -31,20 +36,20 @@ pnpm add @rajutechie-streamkit/server-sdk
 ```typescript
 import { RajutechieStreamKitServer } from '@rajutechie-streamkit/server-sdk';
 
-const rajutechie-streamkit = new RajutechieStreamKitServer({
-  apiKey: 'sk_live_xxxxx',
+const streamkit = new RajutechieStreamKitServer({
+  apiKey:    'sk_live_xxxxx',
   apiSecret: 'secret_xxxxx',
-  apiUrl: 'https://api.rajutechie-streamkit.io/v1', // optional
+  apiUrl:    'https://your-streamkit-domain.com', // URL of your self-hosted instance
 });
 ```
 
 ### Configuration
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `apiKey` | `string` | required | Your RajutechieStreamKit API key |
-| `apiSecret` | `string` | required | Your RajutechieStreamKit API secret |
-| `apiUrl` | `string` | `https://api.rajutechie-streamkit.io/v1` | API base URL |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `apiKey` | `string` | Your RajutechieStreamKit API key (**required**) |
+| `apiSecret` | `string` | Your RajutechieStreamKit API secret (**required**) |
+| `apiUrl` | `string` | REST API base URL of your self-hosted instance (**required**) |
 
 ---
 
@@ -55,7 +60,7 @@ Generate JWT tokens for client-side authentication. Tokens are signed with your 
 ### Basic Token
 
 ```typescript
-const token = rajutechie-streamkit.generateToken({
+const token = streamkit.generateToken({
   userId: 'user_001',
 });
 // Default: role "user", expires in 1 hour
@@ -64,7 +69,7 @@ const token = rajutechie-streamkit.generateToken({
 ### Token with Options
 
 ```typescript
-const token = rajutechie-streamkit.generateToken({
+const token = streamkit.generateToken({
   userId: 'user_001',
   role: 'moderator',
   expiresIn: '24h', // string or seconds (number)
@@ -90,7 +95,7 @@ const token = rajutechie-streamkit.generateToken({
 
 ```typescript
 try {
-  const payload = rajutechie-streamkit.verifyToken(token);
+  const payload = streamkit.verifyToken(token);
   console.log(payload.sub);  // user ID
   console.log(payload.role); // user role
 } catch (err) {
@@ -124,23 +129,35 @@ const token = tokenGen.generate({
 
 ```typescript
 // Create a user
-const user = await rajutechie-streamkit.users.create({
+const user = await streamkit.users.create({
   externalId: 'your-user-id-123',
   displayName: 'Alice Johnson',
   metadata: { department: 'Engineering' },
 });
 
 // Get a user
-const fetched = await rajutechie-streamkit.users.get('user_001');
+const fetched = await streamkit.users.get('user_001');
+
+// List users
+const { users } = await streamkit.users.list({ limit: 50 });
 
 // Update a user
-await rajutechie-streamkit.users.update('user_001', {
+await streamkit.users.update('user_001', {
   displayName: 'Alice J.',
   metadata: { department: 'Product' },
 });
 
 // Delete (deactivate) a user
-await rajutechie-streamkit.users.delete('user_001');
+await streamkit.users.delete('user_001');
+
+// Register a push device token
+await streamkit.users.registerDevice('user_001', {
+  platform: 'ios',    // 'ios' | 'android' | 'web'
+  pushToken: 'device_token_here',
+});
+
+// Remove a device token (e.g., on logout)
+await streamkit.users.removeDevice('user_001', 'device_token_here');
 ```
 
 ---
@@ -149,7 +166,7 @@ await rajutechie-streamkit.users.delete('user_001');
 
 ```typescript
 // Create a channel
-const channel = await rajutechie-streamkit.chat.createChannel({
+const channel = await streamkit.chat.createChannel({
   type: 'group',      // 'direct', 'group', 'community', 'open'
   name: 'Team Alpha',
   members: ['user_001', 'user_002'],
@@ -158,11 +175,168 @@ const channel = await rajutechie-streamkit.chat.createChannel({
 });
 
 // Delete a channel
-await rajutechie-streamkit.chat.deleteChannel('channel_id');
+await streamkit.chat.deleteChannel('channel_id');
 
 // Send a server-side message
-await rajutechie-streamkit.chat.sendMessage('channel_id', {
+await streamkit.chat.sendMessage('channel_id', {
   text: 'Welcome to the team!',
+});
+```
+
+---
+
+## Call Management
+
+```typescript
+// Create a call
+const call = await streamkit.calls.create({
+  type: 'video',
+  participants: ['user_001', 'user_002'],
+});
+
+// Get call details
+const callInfo = await streamkit.calls.get(call.id);
+
+// List calls
+const { calls } = await streamkit.calls.list({ limit: 20 });
+
+// End a call
+await streamkit.calls.end(call.id);
+
+// Recording
+await streamkit.calls.startRecording(call.id);
+await streamkit.calls.stopRecording(call.id);
+```
+
+---
+
+## Meeting Management
+
+```typescript
+// Schedule a meeting
+const meeting = await streamkit.meetings.schedule({
+  title: 'Sprint Planning',
+  scheduledAt: '2026-04-01T10:00:00Z',
+  duration: 60,
+  participants: ['user_001', 'user_002'],
+  settings: { muteOnJoin: true, waitingRoom: true },
+});
+
+// Get meeting details
+const meetingInfo = await streamkit.meetings.get(meeting.id);
+
+// List meetings
+const { meetings } = await streamkit.meetings.list({ limit: 20 });
+
+// Update a meeting
+await streamkit.meetings.update(meeting.id, { title: 'Updated Sprint Planning' });
+
+// Cancel a meeting
+await streamkit.meetings.cancel(meeting.id);
+
+// End a meeting (terminates active session)
+await streamkit.meetings.end(meeting.id);
+
+// Add / remove participants
+await streamkit.meetings.addParticipant(meeting.id, 'user_003');
+await streamkit.meetings.removeParticipant(meeting.id, 'user_003');
+
+// Mute all participants
+await streamkit.meetings.muteAll(meeting.id);
+```
+
+---
+
+## Live Stream Management
+
+```typescript
+// Create a live stream
+const stream = await streamkit.streams.create({
+  title: 'Product Launch',
+  visibility: 'public',
+});
+console.log('RTMP URL:', stream.rtmpUrl);
+console.log('Stream key:', stream.streamKey);
+
+// Get stream details
+const streamInfo = await streamkit.streams.get(stream.id);
+
+// List streams
+const { streams } = await streamkit.streams.list({ status: 'live' });
+
+// Start / stop streaming
+await streamkit.streams.start(stream.id);
+await streamkit.streams.stop(stream.id);
+
+// Delete a stream
+await streamkit.streams.delete(stream.id);
+```
+
+---
+
+## Moderation
+
+```typescript
+// Ban a user from a channel (or globally)
+await streamkit.moderation.banUser({
+  userId: 'user_bad',
+  channelId: 'channel_001', // omit for global ban
+  reason: 'Spam',
+});
+
+// Lift a ban
+await streamkit.moderation.unbanUser('user_bad');
+
+// List bans
+const { bans } = await streamkit.moderation.listBans({ limit: 50 });
+
+// Create an auto-moderation rule
+const rule = await streamkit.moderation.createRule({
+  type: 'word',    // 'word' | 'regex'
+  value: 'spam',
+  action: 'block', // 'flag' | 'block' | 'ban'
+});
+
+// List rules
+const { rules } = await streamkit.moderation.listRules();
+
+// Delete a rule
+await streamkit.moderation.deleteRule(rule.id);
+
+// List reports
+const { reports } = await streamkit.moderation.listReports({ status: 'pending' });
+
+// Resolve a report
+await streamkit.moderation.resolveReport(reports[0].id, { action: 'dismissed' });
+```
+
+---
+
+## Notifications
+
+```typescript
+// Send a push / email notification to a user
+await streamkit.notifications.send({
+  userId: 'user_001',
+  title: 'New Message',
+  body: 'You have a new message in #general',
+  data: { channelId: 'general' },
+});
+
+// Send to multiple users in bulk
+await streamkit.notifications.sendBulk([
+  { userId: 'user_001', title: 'Meeting in 5 min', body: 'Sprint Planning starts soon' },
+  { userId: 'user_002', title: 'Meeting in 5 min', body: 'Sprint Planning starts soon' },
+]);
+
+// Get notification preferences for a user
+const prefs = await streamkit.notifications.getPreferences('user_001');
+
+// Update preferences
+await streamkit.notifications.updatePreferences('user_001', {
+  push: true,
+  email: false,
+  inApp: true,
 });
 ```
 
@@ -210,10 +384,10 @@ import { webhookMiddleware } from '@rajutechie-streamkit/server-sdk';
 
 const app = express();
 
-app.post('/webhooks/rajutechie-streamkit',
+app.post('/webhooks/streamkit',
   webhookMiddleware({ secret: 'whsec_your_secret', tolerance: 300 }),
   (req, res) => {
-    const event = req.rajutechie-streamkitEvent;
+    const event = req.streamkitEvent;
 
     switch (event.type) {
       case 'message.new':
@@ -234,7 +408,7 @@ The middleware:
 2. Extracts the `X-RajutechieStreamKit-Signature` header
 3. Verifies the HMAC-SHA256 signature
 4. Parses the JSON payload
-5. Attaches the event to `req.rajutechie-streamkitEvent`
+5. Attaches the event to `req.streamkitEvent`
 6. Returns HTTP 400 if verification fails
 
 ---
@@ -250,21 +424,22 @@ import { RajutechieStreamKitServer, webhookMiddleware } from '@rajutechie-stream
 const app = express();
 app.use(express.json());
 
-const rajutechie-streamkit = new RajutechieStreamKitServer({
-  apiKey: process.env.RAJUTECHIE_STREAMKIT_API_KEY!,
+const streamkit = new RajutechieStreamKitServer({
+  apiKey:    process.env.RAJUTECHIE_STREAMKIT_API_KEY!,
   apiSecret: process.env.RAJUTECHIE_STREAMKIT_API_SECRET!,
+  apiUrl:    process.env.STREAMKIT_API_URL!, // e.g. https://your-streamkit-domain.com
 });
 
 // Token endpoint
 app.post('/api/auth/token', async (req, res) => {
   const { userId } = req.body;
-  const token = rajutechie-streamkit.generateToken({ userId, role: 'user' });
+  const token = streamkit.generateToken({ userId, role: 'user' });
   res.json({ token });
 });
 
 // Create channel
 app.post('/api/channels', async (req, res) => {
-  const channel = await rajutechie-streamkit.chat.createChannel({
+  const channel = await streamkit.chat.createChannel({
     type: req.body.type,
     name: req.body.name,
     members: req.body.members,
@@ -273,10 +448,10 @@ app.post('/api/channels', async (req, res) => {
 });
 
 // Webhook handler
-app.post('/webhooks/rajutechie-streamkit',
+app.post('/webhooks/streamkit',
   webhookMiddleware({ secret: process.env.WEBHOOK_SECRET! }),
   (req, res) => {
-    console.log('Event:', req.rajutechie-streamkitEvent?.type);
+    console.log('Event:', req.streamkitEvent?.type);
     res.sendStatus(200);
   }
 );
@@ -294,7 +469,7 @@ function authMiddleware(req, res, next) {
   }
 
   try {
-    const payload = rajutechie-streamkit.verifyToken(authHeader.slice(7));
+    const payload = streamkit.verifyToken(authHeader.slice(7));
     req.userId = payload.sub;
     next();
   } catch {

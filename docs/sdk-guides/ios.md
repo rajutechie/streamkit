@@ -25,7 +25,7 @@ The RajutechieStreamKit iOS SDK is written in Swift and provides native access t
 Add RajutechieStreamKit via Xcode:
 
 1. **File > Add Package Dependencies...**
-2. Enter the repository URL: `https://github.com/rajutechie-streamkit-com/rajutechie/streamkit-ios-sdk`
+2. Enter the repository URL: `https://github.com/rajutechie/streamkit`
 3. Set the version rule to **Up to Next Major Version: 1.0.0**
 4. Add `RajutechieStreamKit` to your target
 
@@ -33,7 +33,7 @@ Or add to `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rajutechie-streamkit-com/rajutechie/streamkit-ios-sdk", from: "1.0.0")
+    .package(url: "https://github.com/rajutechie/streamkit", from: "1.0.0")
 ]
 ```
 
@@ -67,7 +67,8 @@ import RajutechieStreamKit
 
 let config = RajutechieStreamKitConfig(
     apiKey: "sk_live_xxxxx",
-    region: .usEast1
+    apiUrl: "https://your-streamkit-domain.com",
+    wsUrl:  "wss://your-streamkit-domain.com"
 )
 
 let client = RajutechieStreamKit.shared.configure(config)
@@ -75,23 +76,11 @@ let client = RajutechieStreamKit.shared.configure(config)
 
 ### Configuration Options
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `apiKey` | `String` | required | Your RajutechieStreamKit API key |
-| `region` | `Region` | `.usEast1` | Server region |
-| `apiUrl` | `String` | `https://api.rajutechie-streamkit.io/v1` | REST API base URL |
-| `wsUrl` | `String` | `wss://ws.rajutechie-streamkit.io` | WebSocket server URL |
-
-### Available Regions
-
-```swift
-public enum Region: String {
-    case usEast1 = "us-east-1"
-    case usWest2 = "us-west-2"
-    case euWest1 = "eu-west-1"
-    case apSoutheast1 = "ap-southeast-1"
-}
-```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `apiKey` | `String` | Your RajutechieStreamKit API key (**required**) |
+| `apiUrl` | `String` | REST API URL of your self-hosted instance (**required**) |
+| `wsUrl` | `String` | WebSocket URL of your self-hosted instance (**required**) |
 
 ---
 
@@ -231,18 +220,21 @@ let call = try await client.call.start(
 
 ### Handling Incoming Calls
 
-```swift
-client.call.onIncoming { incomingCall in
-    // Present call UI
-    let accepted = await showIncomingCallAlert(
-        caller: incomingCall.callerName,
-        type: incomingCall.type
-    )
+Use `incomingCalls`, an `AsyncStream<Call>`, to observe incoming calls:
 
-    if accepted {
-        try await incomingCall.accept()
-    } else {
-        try await incomingCall.reject()
+```swift
+Task {
+    for await incomingCall in client.call.incomingCalls {
+        // Present call UI
+        let accepted = await showIncomingCallAlert(
+            caller: incomingCall.callerName,
+            type: incomingCall.type
+        )
+        if accepted {
+            try await incomingCall.accept()
+        } else {
+            try await incomingCall.reject()
+        }
     }
 }
 ```
@@ -274,7 +266,7 @@ print(call.isAudioEnabled)
 try await call.toggleVideo()
 print(call.isVideoEnabled)
 
-// Switch camera
+// Switch camera (front / back)
 try await call.switchCamera()
 
 // Screen sharing
@@ -283,6 +275,13 @@ try await call.stopScreenShare()
 
 // End call
 try await call.end()
+```
+
+### Call Statistics
+
+```swift
+let stats: CallStats = try await call.getStats()
+print("Duration: \(stats.duration)s, bitrate: \(stats.bitrate) bps")
 ```
 
 ### Rendering Video
@@ -347,19 +346,50 @@ try await meeting.removeParticipant(userId: "user_003")
 try await meeting.end()
 ```
 
-### Participant Events
+### Observing Participants (Real-time)
+
+Use `observeParticipants(meetingId:)`, an `AsyncStream<[MeetingParticipant]>`, to get live participant updates:
 
 ```swift
-meeting.onParticipantEvent { event in
-    switch event.action {
-    case .joined:
-        print("\(event.user.name) joined")
-    case .left:
-        print("\(event.user.name) left")
-    case .muted:
-        print("\(event.user.name) was muted")
+Task {
+    for await participants in client.meeting.observeParticipants(meetingId: meeting.id) {
+        updateParticipantList(participants)
     }
 }
+```
+
+### Polls
+
+```swift
+// Create a poll (host only)
+let poll = try await meeting.createPoll(
+    question: "Which date works best?",
+    options: [
+        PollOption(id: "opt-1", text: "Monday"),
+        PollOption(id: "opt-2", text: "Wednesday"),
+    ],
+    anonymous: false
+)
+
+// Vote on a poll
+try await meeting.votePoll(pollId: poll.id, optionId: "opt-1")
+
+// Observe poll updates in real time
+Task {
+    for await polls in client.meeting.observePolls(meetingId: meeting.id) {
+        updatePollsUI(polls)
+    }
+}
+```
+
+### Breakout Rooms
+
+```swift
+let rooms = try await meeting.createBreakoutRooms(
+    count: 3,
+    assignAutomatically: true
+)
+print("Created \(rooms.count) breakout rooms")
 ```
 
 ---

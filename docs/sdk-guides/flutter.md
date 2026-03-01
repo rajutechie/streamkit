@@ -25,7 +25,7 @@ Add RajutechieStreamKit to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  rajutechie-streamkit: ^1.0.0
+  rajutechie_streamkit: ^1.0.0
 ```
 
 Then run:
@@ -59,26 +59,22 @@ flutter pub get
 ## Initialization
 
 ```dart
-import 'package:rajutechie-streamkit/rajutechie_streamkit.dart';
+import 'package:rajutechie_streamkit/rajutechie_streamkit.dart';
 
-final client = RajutechieStreamKit.instance(
-  config: RajutechieStreamKitConfig(
-    apiKey: 'sk_live_xxxxx',
-    region: Region.usEast1,  // optional, default: usEast1
-  ),
+final client = RajutechieStreamKitClient(
+  apiKey: 'sk_live_xxxxx',
+  apiUrl: 'https://your-streamkit-domain.com',
+  wsUrl:  'wss://your-streamkit-domain.com',
 );
 ```
 
-The `RajutechieStreamKit` class uses a factory constructor with internal instance caching keyed by `apiKey`. Calling `RajutechieStreamKit.instance()` with the same API key returns the same instance.
-
 ### Configuration Options
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `apiKey` | `String` | required | Your RajutechieStreamKit API key |
-| `region` | `Region` | `Region.usEast1` | Server region |
-| `apiUrl` | `String` | `https://api.rajutechie-streamkit.io/v1` | REST API base URL |
-| `wsUrl` | `String` | `wss://ws.rajutechie-streamkit.io` | WebSocket server URL |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `apiKey` | `String` | Your RajutechieStreamKit API key (**required**) |
+| `apiUrl` | `String` | REST API URL of your self-hosted instance (**required**) |
+| `wsUrl` | `String` | WebSocket URL of your self-hosted instance (**required**) |
 
 ---
 
@@ -289,6 +285,26 @@ await call.startScreenShare();
 await call.stopScreenShare();
 ```
 
+### Call Statistics
+
+```dart
+final stats = await call.getStats();
+print('Duration: ${stats.duration}s, bitrate: ${stats.bitrate} bps');
+```
+
+### Call Events (Real-time)
+
+```dart
+call.callEvents.listen((event) {
+  switch (event.type) {
+    case 'participant.joined':
+      print('${event.userId} joined');
+    case 'recording.started':
+      showRecordingBadge();
+  }
+});
+```
+
 ### Ending a Call
 
 ```dart
@@ -327,6 +343,19 @@ await client.meeting.join(meetingId: meeting.id);
 await client.meeting.joinByCode(code: 'ABC-DEF-GHI');
 ```
 
+### Updating and Cancelling
+
+```dart
+// Update meeting details
+await client.meeting.update(
+  meetingId: meeting.id,
+  title: 'Updated Sprint Review',
+);
+
+// Cancel a meeting
+await client.meeting.cancel(meetingId: meeting.id);
+```
+
 ### Meeting Controls (Host)
 
 ```dart
@@ -343,18 +372,61 @@ await meeting.removeParticipant(userId: 'user_003');
 await meeting.end();
 ```
 
-### Participant Events
+### Screen Sharing in Meetings
 
 ```dart
-meeting.participantStream.listen((event) {
-  switch (event.action) {
-    case 'joined':
-      print('${event.user.name} joined');
-    case 'left':
-      print('${event.user.name} left');
-    case 'muted':
-      print('${event.user.name} was muted');
-  }
+await meeting.startScreenShare();
+await meeting.stopScreenShare();
+```
+
+### Participant Events (Real-time)
+
+```dart
+// Participant left events
+meeting.participantLeftEvents.listen((event) {
+  print('${event.userId} left the meeting');
+});
+```
+
+### Polls
+
+```dart
+// Create a poll (host only)
+final poll = await meeting.createPoll(
+  question: 'Which date works best?',
+  options: ['Monday', 'Wednesday', 'Friday'],
+  anonymous: false,
+);
+
+// Vote on a poll
+await meeting.votePoll(pollId: poll.id, optionId: 'opt-0');
+
+// Real-time poll results
+meeting.pollResultEvents.listen((poll) {
+  print('Poll results updated: ${poll.question}');
+});
+
+// Observe all active polls
+meeting.pollEvents.listen((polls) {
+  setState(() => _polls = polls);
+});
+```
+
+### Breakout Rooms
+
+```dart
+final rooms = await meeting.createBreakoutRooms(
+  count: 3,
+  assignAutomatically: true,
+);
+print('Created ${rooms.length} breakout rooms');
+```
+
+### Hand Raise Events
+
+```dart
+meeting.handEvents.listen((event) {
+  print('${event.userId} raised hand');
 });
 ```
 
@@ -419,7 +491,7 @@ RajutechieStreamKit Flutter SDK includes pre-built widgets for common UI pattern
 Renders a scrollable, real-time updating message list:
 
 ```dart
-import 'package:rajutechie-streamkit/rajutechie_streamkit.dart';
+import 'package:rajutechie_streamkit/rajutechie_streamkit.dart';
 
 MessageList(
   channelId: 'ch_abc123',

@@ -12,7 +12,7 @@ yarn add @rajutechie-streamkit/angular-sdk
 pnpm add @rajutechie-streamkit/angular-sdk
 ```
 
-> **Note:** The Angular SDK has a peer dependency on `@angular/core >= 16.0.0` and `@rajutechie-streamkit/core`. Both are installed automatically.
+> **Note:** The Angular SDK has a peer dependency on `@angular/core >= 17.0.0` and `@rajutechie-streamkit/core`. Both are installed automatically.
 
 ## Module Setup
 
@@ -30,7 +30,8 @@ import { AppComponent } from './app.component';
     BrowserModule,
     RajutechieStreamKitModule.forRoot({
       apiKey: 'sk_live_xxxxx',
-      region: 'us-east-1',
+      apiUrl: 'https://your-streamkit-domain.com',
+      wsUrl:  'wss://your-streamkit-domain.com',
     }),
   ],
   bootstrap: [AppComponent],
@@ -40,14 +41,13 @@ export class AppModule {}
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `apiKey` | `string` | **required** | Your RajutechieStreamKit project API key |
-| `region` | `string` | `'us-east-1'` | Deployment region |
-| `apiUrl` | `string` | `'https://api.rajutechie-streamkit.io/v1'` | REST API base URL |
-| `wsUrl` | `string` | `'wss://ws.rajutechie-streamkit.io'` | WebSocket server URL |
-| `logLevel` | `LogLevel` | `LogLevel.WARN` | Logging verbosity |
-| `autoReconnect` | `boolean` | `true` | Automatically reconnect on connection loss |
+| Option | Type | Description |
+|--------|------|-------------|
+| `apiKey` | `string` | Your RajutechieStreamKit project API key (**required**) |
+| `apiUrl` | `string` | REST API URL of your self-hosted instance (**required**) |
+| `wsUrl` | `string` | WebSocket URL of your self-hosted instance (**required**) |
+| `logLevel` | `LogLevel` | Logging verbosity (default: `LogLevel.WARN`) |
+| `autoReconnect` | `boolean` | Automatically reconnect on connection loss (default: `true`) |
 
 ---
 
@@ -68,13 +68,13 @@ export class AppComponent implements OnInit, OnDestroy {
   isConnected = false;
   private sub?: Subscription;
 
-  constructor(private rajutechie-streamkit: RajutechieStreamKitService) {}
+  constructor(private sk: RajutechieStreamKitService) {}
 
   async ngOnInit() {
     const userToken = await this.fetchTokenFromServer();
-    await this.rajutechie-streamkit.connect(userToken);
+    await this.sk.connect(userToken);
 
-    this.sub = this.rajutechie-streamkit.connectionState$.subscribe((state) => {
+    this.sub = this.sk.connectionState$.subscribe((state) => {
       this.isConnected = state === 'connected';
       console.log('Connection state:', state);
     });
@@ -82,7 +82,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
-    this.rajutechie-streamkit.disconnect();
+    this.sk.disconnect();
   }
 
   private async fetchTokenFromServer(): Promise<string> {
@@ -508,13 +508,13 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   private subs: Subscription[] = [];
 
   constructor(
-    private rajutechie-streamkit: RajutechieStreamKitService,
+    private sk: RajutechieStreamKitService,
     private chatService: RajutechieStreamKitChatService,
   ) {}
 
   async ngOnInit() {
     const token = await this.fetchToken();
-    await this.rajutechie-streamkit.connect(token);
+    await this.sk.connect(token);
   }
 
   selectChannel(channelId: string) {
@@ -567,7 +567,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subs.forEach((s) => s.unsubscribe());
-    this.rajutechie-streamkit.disconnect();
+    this.sk.disconnect();
   }
 
   private async fetchToken(): Promise<string> {
